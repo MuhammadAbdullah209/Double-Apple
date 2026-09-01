@@ -63,17 +63,17 @@ function PlusIconSmall() {
   )
 }
 
-function ChatIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
-      <path
-        d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.8 8.8 0 0 1-4-1L3 20l1-5.5A8.38 8.38 0 0 1 3 11.5 8.5 8.5 0 1 1 21 11.5z"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
+// function ChatIcon() {
+//   return (
+//     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+//       <path
+//         d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.8 8.8 0 0 1-4-1L3 20l1-5.5A8.38 8.38 0 0 1 3 11.5 8.5 8.5 0 1 1 21 11.5z"
+//         strokeLinecap="round"
+//         strokeLinejoin="round"
+//       />
+//     </svg>
+//   )
+// }
 
 function HeartOutline() {
   return (
@@ -412,9 +412,9 @@ export default function ProductDetail() {
             </div>
 
             <div className="mt-5 flex items-center gap-5 text-sm text-[#4a4a43]">
-              <button type="button" className="flex items-center gap-1.5 hover:text-[#3c6e35]">
+              {/* <button type="button" className="flex items-center gap-1.5 hover:text-[#3c6e35]">
                 <ChatIcon /> Chat
-              </button>
+              </button> */}
               <span className="h-4 w-px bg-black/10" />
               <button type="button" className="flex items-center gap-1.5 hover:text-[#3c6e35]">
                 <HeartOutline /> Wishlist

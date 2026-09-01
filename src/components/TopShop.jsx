@@ -66,7 +66,7 @@ export default function TopShop() {
 
       <div className="mt-10 flex justify-center">
         <a
-          href="#collections"
+          href="/shop"
           className="inline-flex items-center gap-2  bg-[#3CA43C] px-7 py-3 text-sm font-semibold text-black transition hover:bg-[#345f2e]"
         >
           Explore Our Shop
