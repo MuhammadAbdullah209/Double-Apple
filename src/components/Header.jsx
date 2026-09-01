@@ -164,7 +164,7 @@ function Logo() {
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [shopMenuOpen, setShopMenuOpen] = useState(false);
-  const { count: cartCount } = useCart();
+  const { count: cartCount, openCart } = useCart();
 
   return (
     <header className="sticky top-0 z-50 w-full bg-[#050509]">
@@ -370,8 +370,9 @@ export default function Header() {
 
           {/* CART */}
 
-          <Link
-            to="/cart"
+          <button
+            type="button"
+            onClick={openCart}
             aria-label="Cart"
             className="
               relative
@@ -410,7 +411,7 @@ export default function Header() {
                 {cartCount}
               </span>
             )}
-          </Link>
+          </button>
 
         </div>
 

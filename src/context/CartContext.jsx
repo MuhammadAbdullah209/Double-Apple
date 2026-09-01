@@ -15,6 +15,7 @@ function loadCart() {
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState(loadCart)
+  const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
     try {
@@ -44,6 +45,7 @@ export function CartProvider({ children }) {
         },
       ]
     })
+    setIsOpen(true)
   }
 
   const removeItem = (slug) => {
@@ -66,7 +68,8 @@ export function CartProvider({ children }) {
 
   const clearCart = () => setItems([])
 
-  const count = useMemo(() => items.reduce((sum, i) => sum + i.qty, 0), [items])
+  const count = useMemo(() => items.length, [items])
+  const totalQty = useMemo(() => items.reduce((sum, i) => sum + i.qty, 0), [items])
   const subtotal = useMemo(
     () => items.reduce((sum, i) => sum + parseFloat(i.price) * i.qty, 0),
     [items]
@@ -76,6 +79,10 @@ export function CartProvider({ children }) {
     [items]
   )
 
+  const openCart = () => setIsOpen(true)
+  const closeCart = () => setIsOpen(false)
+  const toggleCart = () => setIsOpen((v) => !v)
+
   const value = {
     items,
     addItem,
@@ -84,8 +91,13 @@ export function CartProvider({ children }) {
     toggleProtection,
     clearCart,
     count,
+    totalQty,
     subtotal,
     protectionTotal,
+    isOpen,
+    openCart,
+    closeCart,
+    toggleCart,
   }
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
