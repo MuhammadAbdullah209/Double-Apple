@@ -1,10 +1,10 @@
-import heroBg from '../assets/images/hero-banner.jpg'
+import heroBg from '../assets/images/hero-cannabis.webp'
 import { ArrowRightIcon } from './Icons'
 
 export default function Hero() {
   return (
     <section
-      className="relative isolate flex min-h-[320px] items-center justify-center overflow-hidden px-5 py-12 text-center sm:min-h-[360px]"
+      className="relative isolate flex min-h-[380px] items-center justify-center overflow-hidden px-5 py-12 text-center sm:min-h-[440px]"
       style={{ backgroundColor: '#0d0d15' }}
     >
       {/* Background image */}
