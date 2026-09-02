@@ -88,7 +88,11 @@ export default function SignIn() {
 
             {signedIn ? (
               <div className="mt-6 rounded-md border border-[#3c6e35]/30 bg-[#eef4e9] p-4 text-sm text-[#2f5929]">
-                You&rsquo;re signed in! Welcome back to Double Apple.
+                You&rsquo;re signed in! Welcome back to Double Apple.{' '}
+                <Link to="/profile" className="font-semibold underline">
+                  View your profile
+                </Link>
+                .
               </div>
             ) : (
               <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-6 flex flex-col gap-5">

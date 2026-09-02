@@ -1,16 +1,21 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import logo from "../assets/images/doubleapple.png";
 import ShopMegaMenu from "./ShopMegaMenu";
 
 const NAV = [
-  { label: "Home", href: "/", active: true },
-  { label: "About Us", href: "#about" },
+  { label: "Home", href: "/" },
+  { label: "About Us", href: "/about-us" },
   { label: "Shop", href: "/shop", dropdown: true },
-  { label: "Blog", href: "#blog" },
-  { label: "Contact Us", href: "#contact" },
+  { label: "Blog", href: "/blog" },
+  { label: "Contact Us", href: "/contact-us" },
 ];
+
+function isNavActive(pathname, href) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(href + "/");
+}
 
 /* ================================
    SEARCH ICON
@@ -165,6 +170,7 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [shopMenuOpen, setShopMenuOpen] = useState(false);
   const { count: cartCount, openCart } = useCart();
+  const location = useLocation();
 
   return (
     <header className="sticky top-0 z-50 w-full bg-[#050509]">
@@ -208,8 +214,9 @@ export default function Header() {
           "
         >
 
-          {NAV.map((item) =>
-            item.dropdown ? (
+          {NAV.map((item) => {
+            const active = isNavActive(location.pathname, item.href);
+            return item.dropdown ? (
               <div
                 key={item.label}
                 className="relative h-full"
@@ -229,7 +236,7 @@ export default function Header() {
                     font-medium
                     leading-none
                     no-underline
-                    ${shopMenuOpen ? "text-[#54bd3b]" : "text-white/80"}
+                    ${shopMenuOpen || active ? "text-[#54bd3b]" : "text-white/80"}
                   `}
                 >
                   {item.label}
@@ -245,9 +252,9 @@ export default function Header() {
                 )}
               </div>
             ) : (
-              <a
+              <Link
                 key={item.label}
-                href={item.href}
+                to={item.href}
                 className={`
                   flex
                   h-full
@@ -259,17 +266,13 @@ export default function Header() {
                   font-medium
                   leading-none
                   no-underline
-                  ${
-                    item.active
-                      ? "text-[#54bd3b]"
-                      : "text-white/80"
-                  }
+                  ${active ? "text-[#54bd3b]" : "text-white/80"}
                 `}
               >
                 {item.label}
-              </a>
-            )
-          )}
+              </Link>
+            );
+          })}
 
         </nav>
 
@@ -504,9 +507,9 @@ export default function Header() {
         >
 
           {NAV.map((item) => (
-            <a
+            <Link
               key={item.label}
-              href={item.href}
+              to={item.href}
               onClick={() => setMenuOpen(false)}
               className={`
                 block
@@ -516,14 +519,14 @@ export default function Header() {
                 font-medium
                 no-underline
                 ${
-                  item.active
+                  isNavActive(location.pathname, item.href)
                     ? "text-[#54bd3b]"
                     : "text-white/80"
                 }
               `}
             >
               {item.label}
-            </a>
+            </Link>
           ))}
 
           <div

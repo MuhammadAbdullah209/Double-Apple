@@ -7,6 +7,10 @@ import VerifyOtp from './pages/VerifyOtp'
 import Shop from './pages/Shop'
 import ProductDetail from './pages/ProductDetail'
 import Cart from './pages/Cart'
+import AboutUs from './pages/AboutUs'
+import ContactUs from './pages/ContactUs'
+import Blog from './pages/Blog'
+import Profile from './pages/Profile'
 
 function App() {
   return (
@@ -19,6 +23,10 @@ function App() {
         <Route path="/shop" element={<Shop />} />
         <Route path="/shop/:slug" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/contact-us" element={<ContactUs />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/profile" element={<Profile />} />
       </Route>
     </Routes>
   )

@@ -1,6 +1,12 @@
 import { SocialIcon } from './Icons'
 import logo from '../assets/images/doubleapple.png'
 
+const LINK_ROUTES = {
+  'About Us': '/about-us',
+  'Contact Us': '/contact-us',
+  Blog: '/blog',
+}
+
 const COLUMNS = [
   {
     title: 'About',
@@ -51,7 +57,10 @@ export default function Footer() {
             <ul className="mt-4 flex flex-col gap-2.5">
               {col.links.map((link) => (
                 <li key={link}>
-                  <a href="#" className="text-[13px] text-white/55 transition hover:text-white">
+                  <a
+                    href={LINK_ROUTES[link] || '#'}
+                    className="text-[13px] text-white/55 transition hover:text-white"
+                  >
                     {link}
                   </a>
                 </li>

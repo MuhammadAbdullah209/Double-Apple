@@ -15,12 +15,15 @@ export default function VisitUs() {
             <PinIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#3c6e35]" />
             11220 N Lamar Blvd B202, Austin, TX 78753
           </p>
-          <p className="mt-4 text-sm text-[#4a4a43]">
-            Store hours and phone number coming soon &mdash; reach out through our{' '}
-            <a href="#contact" className="text-[#3c6e35] hover:underline">
-              Contact Us
+          <p className="mt-3 text-sm text-[#4a4a43]">Mon &ndash; Sun, 10:00 AM &ndash; 9:00 PM</p>
+          <p className="mt-1 text-sm text-[#4a4a43]">
+            <a href="tel:+15122713390" className="text-[#3c6e35] hover:underline">
+              (512) 271-3390
             </a>{' '}
-            page in the meantime.
+            &bull;{' '}
+            <a href="mailto:hello@doubleapple.shop" className="text-[#3c6e35] hover:underline">
+              hello@doubleapple.shop
+            </a>
           </p>
 
           <p className="mt-6 text-sm font-bold text-[#1a1a17]">Areas we serve</p>
