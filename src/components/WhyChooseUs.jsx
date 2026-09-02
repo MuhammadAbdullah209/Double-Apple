@@ -1,6 +1,5 @@
 import { LeafIcon } from './Icons'
-
-const LEAF_URL = 'https://upload.wikimedia.org/wikipedia/commons/a/a8/Cannabis_leaf.svg'
+import leafPattern from '../assets/images/leaf-pattern.webp'
 
 const STATS = [
   { title: 'Largest Selection', text: 'Over 2,000 products across vapes, THCA, hookah, kratom, CBD, glass, and accessories' },
@@ -13,11 +12,12 @@ export default function WhyChooseUs() {
   return (
     <section className="relative overflow-hidden bg-[#eef4e9] px-5 py-16 lg:px-10">
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.07]"
+        className="pointer-events-none absolute inset-0"
         style={{
-          backgroundImage: `url(${LEAF_URL})`,
-          backgroundRepeat: 'repeat',
-          backgroundSize: '160px 160px',
+          backgroundImage: `url(${leafPattern})`,
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'top center',
+          backgroundSize: 'cover',
         }}
       />
 
