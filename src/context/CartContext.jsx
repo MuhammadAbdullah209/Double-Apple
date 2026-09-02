@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { slugify } from '../data/products'
+import { getImageForCategory } from '../data/productImages'
 
 const CartContext = createContext(null)
 const STORAGE_KEY = 'double-apple-cart'
@@ -26,19 +26,19 @@ export function CartProvider({ children }) {
   }, [items])
 
   const addItem = (product, qty = 1) => {
-    const slug = slugify(product.name)
+    const id = product._id
     setItems((prev) => {
-      const existing = prev.find((i) => i.slug === slug)
+      const existing = prev.find((i) => i._id === id)
       if (existing) {
-        return prev.map((i) => (i.slug === slug ? { ...i, qty: i.qty + qty } : i))
+        return prev.map((i) => (i._id === id ? { ...i, qty: i.qty + qty } : i))
       }
       return [
         ...prev,
         {
-          slug,
+          _id: id,
           name: product.name,
-          price: product.price,
-          image: product.image,
+          price: product.finalPrice ?? product.price,
+          image: getImageForCategory(product.category),
           category: product.category,
           qty,
           protection: false,
@@ -48,21 +48,21 @@ export function CartProvider({ children }) {
     setIsOpen(true)
   }
 
-  const removeItem = (slug) => {
-    setItems((prev) => prev.filter((i) => i.slug !== slug))
+  const removeItem = (id) => {
+    setItems((prev) => prev.filter((i) => i._id !== id))
   }
 
-  const updateQty = (slug, qty) => {
+  const updateQty = (id, qty) => {
     if (qty < 1) {
-      removeItem(slug)
+      removeItem(id)
       return
     }
-    setItems((prev) => prev.map((i) => (i.slug === slug ? { ...i, qty } : i)))
+    setItems((prev) => prev.map((i) => (i._id === id ? { ...i, qty } : i)))
   }
 
-  const toggleProtection = (slug) => {
+  const toggleProtection = (id) => {
     setItems((prev) =>
-      prev.map((i) => (i.slug === slug ? { ...i, protection: !i.protection } : i))
+      prev.map((i) => (i._id === id ? { ...i, protection: !i.protection } : i))
     )
   }
 

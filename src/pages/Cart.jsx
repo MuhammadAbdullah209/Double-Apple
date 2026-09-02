@@ -1,24 +1,17 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
-import { ALL_PRODUCTS, slugify } from '../data/products'
+import { useAuth } from '../context/AuthContext'
+import { getAddresses, createAddress } from '../api/addresses'
+import { createOrder } from '../api/orders'
+import { getProducts } from '../api/products'
+import { getImageForCategory } from '../data/productImages'
 import ProductCard from '../components/ProductCard'
 import VisitUs from '../components/VisitUs'
 import PaymentMethodModal from '../components/PaymentMethodModal'
-import ShippingAddressModal from '../components/ShippingAddressModal'
 
 const COUPONS = {
   WELCOME10: 0.1,
-}
-
-const PICKUP_LABEL = 'Pickup at 11220 N Lamar Blvd B202, Austin, TX'
-
-function generateOrderNumber() {
-  const part1 = Math.floor(100000000 + Math.random() * 900000000)
-  const part2 = Math.floor(1000 + Math.random() * 9000)
-  const letter = String.fromCharCode(65 + Math.floor(Math.random() * 26))
-  const part3 = Math.floor(10 + Math.random() * 90)
-  return `INV/${part1}/DA/${part2}-${letter}${part3}`
 }
 
 function MinusIcon() {
@@ -49,17 +42,6 @@ function TrashIcon() {
   )
 }
 
-function TruckIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <path d="M3 6h11v10H3z" strokeLinejoin="round" />
-      <path d="M14 10h4l3 3v3h-7z" strokeLinejoin="round" />
-      <circle cx="7" cy="18" r="1.6" />
-      <circle cx="17.5" cy="18" r="1.6" />
-    </svg>
-  )
-}
-
 function CardIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
@@ -69,19 +51,21 @@ function CardIcon() {
   )
 }
 
+const EMPTY_ADDRESS_FORM = { street: '', city: '', province: '', postalCode: '', country: '' }
+const EMPTY_GUEST_FORM = { firstName: '', lastName: '', email: '', phone: '' }
+
 export default function Cart() {
   const { items, updateQty, removeItem, toggleProtection, subtotal, protectionTotal, clearCart } =
     useCart()
+  const { isAuthenticated } = useAuth()
 
-  const [address, setAddress] = useState(null)
-  const [editingAddress, setEditingAddress] = useState(false)
-  const [addressForm, setAddressForm] = useState({
-    line1: '',
-    country: '',
-    province: '',
-    city: '',
-    postalCode: '',
-  })
+  const [savedAddresses, setSavedAddresses] = useState([])
+  const [selectedAddressId, setSelectedAddressId] = useState(null)
+  const [addingAddress, setAddingAddress] = useState(false)
+  const [addressForm, setAddressForm] = useState(EMPTY_ADDRESS_FORM)
+  const [savingAddress, setSavingAddress] = useState(false)
+
+  const [guestForm, setGuestForm] = useState(EMPTY_GUEST_FORM)
 
   const [showCoupon, setShowCoupon] = useState(false)
   const [couponInput, setCouponInput] = useState('')
@@ -89,31 +73,53 @@ export default function Cart() {
   const [couponError, setCouponError] = useState('')
 
   const [notes, setNotes] = useState({})
-  const [notingSlug, setNotingSlug] = useState(null)
-
-  const [placed, setPlaced] = useState(false)
+  const [notingId, setNotingId] = useState(null)
 
   const [paymentModalOpen, setPaymentModalOpen] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState({
     id: 'pickup',
-    label: 'Pay at pickup (card or cash)',
+    label: 'Cash On Delivery',
   })
 
-  const [shippingModalOpen, setShippingModalOpen] = useState(false)
-  const [shippingAddress, setShippingAddress] = useState(null)
-
   const [placedOrder, setPlacedOrder] = useState(null)
+  const [placing, setPlacing] = useState(false)
+  const [placeError, setPlaceError] = useState('')
+
+  const [relatedProducts, setRelatedProducts] = useState([])
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setSavedAddresses([])
+      setSelectedAddressId(null)
+      setAddingAddress(true)
+      return
+    }
+    getAddresses()
+      .then((data) => {
+        const list = data.addresses || []
+        setSavedAddresses(list)
+        setAddingAddress(list.length === 0)
+        if (list.length > 0) setSelectedAddressId(list[0]._id)
+      })
+      .catch(() => {})
+  }, [isAuthenticated])
+
+  useEffect(() => {
+    getProducts({ limit: 8 })
+      .then((data) => {
+        const cartIds = new Set(items.map((i) => i._id))
+        setRelatedProducts((data.products || []).filter((p) => !cartIds.has(p._id)).slice(0, 6))
+      })
+      .catch(() => setRelatedProducts([]))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const itemCount = items.reduce((s, i) => s + i.qty, 0)
   const discount = appliedCoupon ? (subtotal + protectionTotal) * COUPONS[appliedCoupon] : 0
   const grandTotal = subtotal + protectionTotal - discount
-  const shippingLabel = shippingAddress
-    ? `${shippingAddress.line1}, ${shippingAddress.city}, ${shippingAddress.province} ${shippingAddress.postalCode}`
-    : PICKUP_LABEL
 
-  const relatedProducts = ALL_PRODUCTS.filter(
-    (p) => !items.some((i) => i.slug === slugify(p.name))
-  ).slice(0, 6)
+  const selectedAddress = savedAddresses.find((a) => a._id === selectedAddressId) || null
+  const shippingAddress = addingAddress ? addressForm : selectedAddress
 
   const applyCoupon = () => {
     const code = couponInput.trim().toUpperCase()
@@ -126,38 +132,71 @@ export default function Cart() {
     }
   }
 
-  const saveAddress = (e) => {
+  const saveNewAddress = async (e) => {
     e.preventDefault()
-    setAddress(addressForm)
-    setEditingAddress(false)
-    setShippingAddress((prev) => (prev ? addressForm : prev))
+    if (!isAuthenticated) {
+      setAddingAddress(false)
+      return
+    }
+    setSavingAddress(true)
+    try {
+      const { address } = await createAddress(addressForm)
+      setSavedAddresses((prev) => [address, ...prev])
+      setSelectedAddressId(address._id)
+      setAddingAddress(false)
+      setAddressForm(EMPTY_ADDRESS_FORM)
+    } catch (err) {
+      setPlaceError(err.response?.data?.message || 'Could not save that address.')
+    } finally {
+      setSavingAddress(false)
+    }
   }
 
-  const placeOrder = () => {
-    setPlacedOrder({
-      items,
-      itemCount,
-      subtotal,
-      protectionTotal,
-      discount,
-      grandTotal,
-      paymentMethod,
-      shippingLabel,
-      orderNumber: generateOrderNumber(),
-      date: new Date(),
-    })
-    setPlaced(true)
-    clearCart()
+  const placeOrder = async () => {
+    setPlaceError('')
+    if (!shippingAddress?.street || !shippingAddress?.city || !shippingAddress?.province || !shippingAddress?.country) {
+      setPlaceError('Please provide a complete shipping address.')
+      return
+    }
+    if (!isAuthenticated) {
+      if (!guestForm.firstName || !guestForm.lastName || !guestForm.email || !guestForm.phone) {
+        setPlaceError('Please fill in your contact details to check out as a guest.')
+        return
+      }
+    }
+
+    setPlacing(true)
+    try {
+      const { order } = await createOrder({
+        items: items.map((i) => ({ productId: i._id, quantity: i.qty })),
+        shippingAddress: {
+          street: shippingAddress.street,
+          city: shippingAddress.city,
+          province: shippingAddress.province,
+          postalCode: shippingAddress.postalCode,
+          country: shippingAddress.country,
+        },
+        paymentMethod: 'Cash On Delivery',
+        guestInfo: isAuthenticated ? undefined : guestForm,
+      })
+      setPlacedOrder({ order, protectionTotal, discount, grandTotal: order.totalAmount + protectionTotal - discount })
+      clearCart()
+    } catch (err) {
+      setPlaceError(err.response?.data?.message || 'Could not place your order. Please try again.')
+    } finally {
+      setPlacing(false)
+    }
   }
 
-  if (placed && placedOrder) {
-    const dateLabel = placedOrder.date.toLocaleDateString('en-US', {
+  if (placedOrder) {
+    const { order } = placedOrder
+    const dateLabel = new Date(order.createdAt).toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'long',
       day: 'numeric',
       year: 'numeric',
     })
-    const orderRelated = ALL_PRODUCTS.slice(0, 6)
+    const addr = order.shippingAddress
 
     return (
       <>
@@ -169,7 +208,7 @@ export default function Cart() {
               </svg>
             </div>
             <h1 className="mt-4 text-center text-2xl font-bold text-[#1a1a17]">Thanks for Your Order!</h1>
-            <p className="mt-1 text-center text-xs text-[#9a988e]">{placedOrder.orderNumber}</p>
+            <p className="mt-1 text-center text-xs text-[#9a988e]">Order #{order._id}</p>
 
             <div className="mt-6 border-t border-black/10 pt-4">
               <p className="text-sm font-bold text-[#1a1a17]">Transaction Date</p>
@@ -178,44 +217,42 @@ export default function Cart() {
 
             <div className="mt-4 border-t border-black/10 pt-4">
               <p className="text-sm font-bold text-[#1a1a17]">Payment Method</p>
-              <p className="mt-1 text-sm text-[#4a4a43]">{placedOrder.paymentMethod.label}</p>
+              <p className="mt-1 text-sm text-[#4a4a43]">{order.paymentMethod}</p>
             </div>
 
-            <div className="mt-4 flex items-center justify-between border-t border-black/10 pt-4">
-              <div>
-                <p className="text-sm font-bold text-[#1a1a17]">Shipping Method</p>
-                <p className="mt-1 text-sm text-[#4a4a43]">{placedOrder.shippingLabel}</p>
-              </div>
-              <button
-                type="button"
-                className="shrink-0 text-xs font-semibold text-[#3CA43C] hover:underline"
-              >
-                Track Order
-              </button>
+            <div className="mt-4 border-t border-black/10 pt-4">
+              <p className="text-sm font-bold text-[#1a1a17]">Shipping To</p>
+              <p className="mt-1 text-sm text-[#4a4a43]">
+                {addr.street}, {addr.city}, {addr.province} {addr.postalCode}
+              </p>
             </div>
 
             <h2 className="mt-6 border-t border-black/10 pt-4 text-sm font-bold text-[#1a1a17]">
               Your Order
             </h2>
             <div className="mt-3 flex flex-col gap-3">
-              {placedOrder.items.map((item) => (
+              {order.items.map((item) => (
                 <div
-                  key={item.slug}
+                  key={item._id}
                   className="flex items-start gap-4 rounded-lg border border-black/10 p-4"
                 >
                   <div className="grid h-16 w-16 shrink-0 place-items-center rounded-md bg-[#f2f1ec] p-2">
-                    <img src={item.image} alt={item.name} className="h-full w-full object-contain" />
+                    <img
+                      src={getImageForCategory(item.product?.category)}
+                      alt={item.product?.name}
+                      className="h-full w-full object-contain"
+                    />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold uppercase tracking-wide text-[#1a1a17] underline">
-                      {item.name}
+                      {item.product?.name}
                     </p>
                     <span className="mt-1 inline-block rounded-md bg-[#eef4e9] px-2 py-0.5 text-[11px] font-semibold text-[#3c6e35]">
-                      {item.category}
+                      {item.product?.category}
                     </span>
                     <p className="mt-2 text-sm font-bold text-[#1a1a17]">${item.price}</p>
                   </div>
-                  <span className="shrink-0 text-sm font-semibold text-[#7a7a72]">x{item.qty}</span>
+                  <span className="shrink-0 text-sm font-semibold text-[#7a7a72]">x{item.quantity}</span>
                 </div>
               ))}
             </div>
@@ -223,31 +260,21 @@ export default function Cart() {
             <div className="mt-6 flex flex-col gap-2 border-t border-black/10 pt-4 text-sm text-[#4a4a43]">
               <div className="flex items-center justify-between">
                 <span>
-                  Total Product Price ({placedOrder.itemCount} Item{placedOrder.itemCount === 1 ? '' : 's'})
+                  Total Product Price ({order.totalItems} Item{order.totalItems === 1 ? '' : 's'})
                 </span>
-                <span className="font-semibold text-[#1a1a17]">${placedOrder.subtotal.toFixed(2)}</span>
+                <span className="font-semibold text-[#1a1a17]">${order.totalAmount.toFixed(2)}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span>Total Product Protection</span>
-                <span className="font-semibold text-[#1a1a17]">
-                  ${placedOrder.protectionTotal.toFixed(2)}
-                </span>
-              </div>
+              {placedOrder.protectionTotal > 0 && (
+                <div className="flex items-center justify-between">
+                  <span>Total Product Protection</span>
+                  <span className="font-semibold text-[#1a1a17]">
+                    ${placedOrder.protectionTotal.toFixed(2)}
+                  </span>
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <span>Total Shipping Price</span>
                 <span className="font-semibold text-[#3CA43C]">Free</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Shipping Insurance</span>
-                <span className="font-semibold text-[#3CA43C]">Free</span>
-              </div>
-            </div>
-
-            <div className="mt-4 border-t border-black/10 pt-4">
-              <p className="text-sm font-bold text-[#1a1a17]">Transaction Fees</p>
-              <div className="mt-2 flex items-center justify-between text-sm text-[#4a4a43]">
-                <span>Service Fees</span>
-                <span className="font-semibold text-[#1a1a17]">$0</span>
               </div>
             </div>
 
@@ -268,7 +295,7 @@ export default function Cart() {
             <div className="mt-4 flex items-center justify-between">
               <span className="text-sm font-bold text-[#1a1a17]">Status</span>
               <span className="rounded-full bg-[#eef4e9] px-3 py-1 text-xs font-bold text-[#3c6e35]">
-                Success
+                {order.status || 'pending'}
               </span>
             </div>
 
@@ -285,20 +312,6 @@ export default function Cart() {
             >
               Continue Shopping
             </Link>
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-[1280px] border-t border-black/10 px-5 py-10 lg:px-10">
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-[#1a1a17]">Related Products</h2>
-            <Link to="/shop" className="text-sm font-semibold text-[#3c6e35] hover:underline">
-              View all
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
-            {orderRelated.map((p) => (
-              <ProductCard key={p.name} product={p} />
-            ))}
           </div>
         </section>
 
@@ -343,7 +356,7 @@ export default function Cart() {
 
             <div className="mt-4 flex flex-col gap-4">
               {items.map((item) => (
-                <div key={item.slug} className="rounded-xl border border-black/10 p-5">
+                <div key={item._id} className="rounded-xl border border-black/10 p-5">
                   <div className="flex flex-wrap items-start gap-4">
                     <div className="grid h-20 w-20 shrink-0 place-items-center rounded-md bg-[#f2f1ec] p-2">
                       <img src={item.image} alt={item.name} className="h-full w-full object-contain" />
@@ -351,7 +364,7 @@ export default function Cart() {
 
                     <div className="min-w-0 flex-1">
                       <Link
-                        to={`/shop/${item.slug}`}
+                        to={`/shop/${item._id}`}
                         className="text-sm font-bold uppercase tracking-wide text-[#1a1a17] underline hover:text-[#3c6e35]"
                       >
                         {item.name}
@@ -366,7 +379,7 @@ export default function Cart() {
                         <p className="text-lg font-extrabold text-[#1a1a17]">${item.price}</p>
                         <button
                           type="button"
-                          onClick={() => setNotingSlug(notingSlug === item.slug ? null : item.slug)}
+                          onClick={() => setNotingId(notingId === item._id ? null : item._id)}
                           className="text-xs font-semibold text-[#3CA43C] hover:underline"
                         >
                           Write Note
@@ -374,19 +387,19 @@ export default function Cart() {
                         <button
                           type="button"
                           aria-label="Remove item"
-                          onClick={() => removeItem(item.slug)}
+                          onClick={() => removeItem(item._id)}
                           className="text-[#9a988e] hover:text-red-500"
                         >
                           <TrashIcon />
                         </button>
                       </div>
 
-                      {notingSlug === item.slug && (
+                      {notingId === item._id && (
                         <textarea
                           autoFocus
                           rows={2}
-                          value={notes[item.slug] || ''}
-                          onChange={(e) => setNotes((n) => ({ ...n, [item.slug]: e.target.value }))}
+                          value={notes[item._id] || ''}
+                          onChange={(e) => setNotes((n) => ({ ...n, [item._id]: e.target.value }))}
                           placeholder="Add a note for this item…"
                           className="mt-3 w-full rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
                         />
@@ -397,7 +410,7 @@ export default function Cart() {
                       <button
                         type="button"
                         aria-label="Decrease quantity"
-                        onClick={() => updateQty(item.slug, item.qty - 1)}
+                        onClick={() => updateQty(item._id, item.qty - 1)}
                         className="grid h-9 w-9 place-items-center text-[#4a4a43] hover:bg-black/5"
                       >
                         <MinusIcon />
@@ -408,7 +421,7 @@ export default function Cart() {
                       <button
                         type="button"
                         aria-label="Increase quantity"
-                        onClick={() => updateQty(item.slug, item.qty + 1)}
+                        onClick={() => updateQty(item._id, item.qty + 1)}
                         className="grid h-9 w-9 place-items-center text-[#4a4a43] hover:bg-black/5"
                       >
                         <PlusIconSmall />
@@ -420,7 +433,7 @@ export default function Cart() {
                     <input
                       type="checkbox"
                       checked={item.protection}
-                      onChange={() => toggleProtection(item.slug)}
+                      onChange={() => toggleProtection(item._id)}
                       className="mt-0.5 h-4 w-4 shrink-0 accent-[#3CA43C]"
                     />
                     <span className="flex-1">
@@ -435,121 +448,149 @@ export default function Cart() {
               ))}
             </div>
 
-            <h2 className="mt-10 text-xl font-bold text-[#1a1a17]">Address</h2>
-            <div className="mt-4 rounded-xl border border-black/10 p-5">
-              <p className="inline-block border-b-2 border-[#3CA43C] pb-2 text-sm font-bold text-[#3CA43C]">
-                {address ? 'Existing Address' : 'New Address'}
-              </p>
+            {!isAuthenticated && (
+              <>
+                <h2 className="mt-10 text-xl font-bold text-[#1a1a17]">Contact Details</h2>
+                <div className="mt-4 grid grid-cols-1 gap-3 rounded-xl border border-black/10 p-5 sm:grid-cols-2">
+                  <input
+                    placeholder="First Name"
+                    value={guestForm.firstName}
+                    onChange={(e) => setGuestForm((f) => ({ ...f, firstName: e.target.value }))}
+                    className="rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
+                  />
+                  <input
+                    placeholder="Last Name"
+                    value={guestForm.lastName}
+                    onChange={(e) => setGuestForm((f) => ({ ...f, lastName: e.target.value }))}
+                    className="rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
+                  />
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={guestForm.email}
+                    onChange={(e) => setGuestForm((f) => ({ ...f, email: e.target.value }))}
+                    className="rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
+                  />
+                  <input
+                    type="tel"
+                    placeholder="Phone"
+                    value={guestForm.phone}
+                    onChange={(e) => setGuestForm((f) => ({ ...f, phone: e.target.value }))}
+                    className="rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
+                  />
+                  <p className="text-xs text-[#7a7a72] sm:col-span-2">
+                    <Link to="/sign-in" className="font-semibold text-[#3c6e35] hover:underline">
+                      Sign in
+                    </Link>{' '}
+                    to save this address for next time.
+                  </p>
+                </div>
+              </>
+            )}
 
-              <div className="mt-4 border-t border-black/10 pt-4">
-                {!address || editingAddress ? (
-                  <form onSubmit={saveAddress} className="flex flex-col gap-3">
-                    <input
-                      required
-                      placeholder="Street address"
-                      value={addressForm.line1}
-                      onChange={(e) => setAddressForm((f) => ({ ...f, line1: e.target.value }))}
-                      className="rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
-                    />
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                      <div>
-                        <p className="mb-1 text-xs text-[#7a7a72]">Country</p>
-                        <input
-                          required
-                          value={addressForm.country}
-                          onChange={(e) => setAddressForm((f) => ({ ...f, country: e.target.value }))}
-                          className="w-full rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
-                        />
-                      </div>
-                      <div>
-                        <p className="mb-1 text-xs text-[#7a7a72]">Province</p>
-                        <input
-                          required
-                          value={addressForm.province}
-                          onChange={(e) => setAddressForm((f) => ({ ...f, province: e.target.value }))}
-                          className="w-full rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
-                        />
-                      </div>
-                      <div>
-                        <p className="mb-1 text-xs text-[#7a7a72]">City</p>
-                        <input
-                          required
-                          value={addressForm.city}
-                          onChange={(e) => setAddressForm((f) => ({ ...f, city: e.target.value }))}
-                          className="w-full rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
-                        />
-                      </div>
-                      <div>
-                        <p className="mb-1 text-xs text-[#7a7a72]">Postal Code</p>
-                        <input
-                          required
-                          value={addressForm.postalCode}
-                          onChange={(e) =>
-                            setAddressForm((f) => ({ ...f, postalCode: e.target.value }))
-                          }
-                          className="w-full rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
-                        />
-                      </div>
+            <h2 className="mt-10 text-xl font-bold text-[#1a1a17]">Shipping Address</h2>
+            <div className="mt-4 rounded-xl border border-black/10 p-5">
+              {isAuthenticated && savedAddresses.length > 0 && !addingAddress && (
+                <div className="flex flex-col gap-3">
+                  {savedAddresses.map((a) => (
+                    <label
+                      key={a._id}
+                      className={`flex items-start gap-3 rounded-md border px-4 py-3 ${
+                        selectedAddressId === a._id ? 'border-[#3CA43C] bg-[#eef4e9]' : 'border-black/15'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="saved-address"
+                        checked={selectedAddressId === a._id}
+                        onChange={() => setSelectedAddressId(a._id)}
+                        className="mt-0.5 h-4 w-4 accent-[#3CA43C]"
+                      />
+                      <span className="text-sm text-[#1a1a17]">
+                        {a.street}, {a.city}, {a.province} {a.postalCode}, {a.country}
+                      </span>
+                    </label>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setAddingAddress(true)}
+                    className="self-start text-xs font-semibold text-[#3CA43C] hover:underline"
+                  >
+                    + Add a new address
+                  </button>
+                </div>
+              )}
+
+              {addingAddress && (
+                <form onSubmit={saveNewAddress} className="flex flex-col gap-3">
+                  <input
+                    required
+                    placeholder="Street address"
+                    value={addressForm.street}
+                    onChange={(e) => setAddressForm((f) => ({ ...f, street: e.target.value }))}
+                    className="rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
+                  />
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div>
+                      <p className="mb-1 text-xs text-[#7a7a72]">Country</p>
+                      <input
+                        required
+                        value={addressForm.country}
+                        onChange={(e) => setAddressForm((f) => ({ ...f, country: e.target.value }))}
+                        className="w-full rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
+                      />
                     </div>
+                    <div>
+                      <p className="mb-1 text-xs text-[#7a7a72]">Province</p>
+                      <input
+                        required
+                        value={addressForm.province}
+                        onChange={(e) => setAddressForm((f) => ({ ...f, province: e.target.value }))}
+                        className="w-full rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
+                      />
+                    </div>
+                    <div>
+                      <p className="mb-1 text-xs text-[#7a7a72]">City</p>
+                      <input
+                        required
+                        value={addressForm.city}
+                        onChange={(e) => setAddressForm((f) => ({ ...f, city: e.target.value }))}
+                        className="w-full rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
+                      />
+                    </div>
+                    <div>
+                      <p className="mb-1 text-xs text-[#7a7a72]">Postal Code</p>
+                      <input
+                        value={addressForm.postalCode}
+                        onChange={(e) => setAddressForm((f) => ({ ...f, postalCode: e.target.value }))}
+                        className="w-full rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
                     <button
                       type="submit"
-                      className="mt-1 self-start rounded-md bg-[#3CA43C] px-5 py-2 text-xs font-bold uppercase tracking-wide text-white hover:bg-[#2f8a30]"
+                      disabled={savingAddress}
+                      className="self-start rounded-md bg-[#3CA43C] px-5 py-2 text-xs font-bold uppercase tracking-wide text-white hover:bg-[#2f8a30] disabled:opacity-60"
                     >
-                      Save Address
+                      {isAuthenticated
+                        ? savingAddress
+                          ? 'Saving…'
+                          : 'Save Address'
+                        : 'Use This Address'}
                     </button>
-                  </form>
-                ) : (
-                  <>
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="text-sm text-[#4a4a43]">
-                        Address <span className="ml-2 rounded-md bg-[#eef4e9] px-2 py-0.5 text-xs font-semibold text-[#3c6e35]">Main Address</span>
-                      </p>
+                    {savedAddresses.length > 0 && (
                       <button
                         type="button"
-                        onClick={() => setEditingAddress(true)}
-                        className="shrink-0 text-xs font-semibold text-[#3CA43C] hover:underline"
+                        onClick={() => setAddingAddress(false)}
+                        className="text-xs font-semibold text-[#7a7a72] hover:underline"
                       >
-                        Change Address
+                        Cancel
                       </button>
-                    </div>
-                    <p className="mt-2 text-sm font-semibold text-[#1a1a17]">{address.line1}</p>
-
-                    <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-                      <div>
-                        <p className="text-xs text-[#7a7a72]">Country</p>
-                        <p className="text-sm font-semibold text-[#1a1a17]">{address.country}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-[#7a7a72]">Province</p>
-                        <p className="text-sm font-semibold text-[#1a1a17]">{address.province}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-[#7a7a72]">City</p>
-                        <p className="text-sm font-semibold text-[#1a1a17]">{address.city}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-[#7a7a72]">Postal Code</p>
-                        <p className="text-sm font-semibold text-[#1a1a17]">{address.postalCode}</p>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <h2 className="mt-10 text-xl font-bold text-[#1a1a17]">Shipping</h2>
-            <div className="mt-4 flex items-center justify-between rounded-xl border border-black/10 px-5 py-4">
-              <div className="flex items-center gap-3">
-                <TruckIcon className="text-[#3CA43C]" />
-                <span className="text-sm font-semibold text-[#1a1a17]">{shippingLabel}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShippingModalOpen(true)}
-                className="shrink-0 text-xs font-semibold text-[#3CA43C] hover:underline"
-              >
-                Change Shipping
-              </button>
+                    )}
+                  </div>
+                </form>
+              )}
             </div>
 
             <h2 className="mt-10 text-xl font-bold text-[#1a1a17]">Payment Method</h2>
@@ -570,6 +611,9 @@ export default function Cart() {
                 Change Payment Method
               </button>
             </div>
+            <p className="mt-2 text-xs text-[#9a988e]">
+              Online payment gateways are coming soon — all orders are Cash On Delivery for now.
+            </p>
           </div>
 
           <aside className="lg:sticky lg:top-24 lg:self-start">
@@ -590,11 +634,6 @@ export default function Cart() {
                 </>
               ) : (
                 <div className="flex flex-col gap-2">
-                  <input
-                    type="email"
-                    placeholder="Email"
-                    className="rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
-                  />
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -642,16 +681,6 @@ export default function Cart() {
                     <span>Total Shipping Price</span>
                     <span className="font-semibold text-[#3CA43C]">Free</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span>Shipping Insurance</span>
-                    <span className="font-semibold text-[#3CA43C]">Free</span>
-                  </div>
-                </div>
-
-                <p className="mt-4 text-sm font-bold text-[#1a1a17]">Transaction Fees</p>
-                <div className="mt-3 flex items-center justify-between text-sm text-[#4a4a43]">
-                  <span>Service Fees</span>
-                  <span className="font-semibold text-[#1a1a17]">$0</span>
                 </div>
 
                 {discount > 0 && (
@@ -669,15 +698,20 @@ export default function Cart() {
                 </div>
               </div>
 
+              {placeError && (
+                <p className="mt-3 text-xs font-medium text-red-600">{placeError}</p>
+              )}
+
               <button
                 type="button"
                 onClick={placeOrder}
-                className="mt-5 w-full rounded-md bg-[#3CA43C] px-6 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-[#2f8a30]"
+                disabled={placing}
+                className="mt-5 w-full rounded-md bg-[#3CA43C] px-6 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-[#2f8a30] disabled:opacity-60"
               >
-                Pay Now
+                {placing ? 'Placing Order…' : 'Place Order'}
               </button>
               <p className="mt-2 text-center text-xs text-[#7a7a72]">
-                No charge today &mdash; you pay in store when you pick up.
+                Cash On Delivery &mdash; you pay when your order arrives.
               </p>
             </div>
           </aside>
@@ -694,7 +728,7 @@ export default function Cart() {
           </div>
           <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
             {relatedProducts.map((p) => (
-              <ProductCard key={p.name} product={p} />
+              <ProductCard key={p._id} product={p} />
             ))}
           </div>
         </section>
@@ -706,14 +740,6 @@ export default function Cart() {
         open={paymentModalOpen}
         onClose={() => setPaymentModalOpen(false)}
         onConfirm={setPaymentMethod}
-      />
-
-      <ShippingAddressModal
-        open={shippingModalOpen}
-        onClose={() => setShippingModalOpen(false)}
-        address={address}
-        onConfirm={setShippingAddress}
-        onEditAddress={() => setEditingAddress(true)}
       />
     </>
   )

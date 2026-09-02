@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import BrandBadge from '../components/BrandBadge'
 import VisitUs from '../components/VisitUs'
+import { useAuth } from '../context/AuthContext'
 
 function EyeIcon({ off }) {
   return (
@@ -64,6 +65,9 @@ function AppleIcon() {
 export default function SignIn() {
   const [showPw, setShowPw] = useState(false)
   const [signedIn, setSignedIn] = useState(false)
+  const [authError, setAuthError] = useState('')
+  const navigate = useNavigate()
+  const { login } = useAuth()
   const {
     register,
     handleSubmit,
@@ -71,9 +75,19 @@ export default function SignIn() {
   } = useForm({ mode: 'onBlur', defaultValues: { savePassword: true } })
 
   const onSubmit = async (data) => {
-    console.log('Sign in:', data)
-    await new Promise((r) => setTimeout(r, 400))
-    setSignedIn(true)
+    setAuthError('')
+    try {
+      await login(data.identifier, data.password)
+      setSignedIn(true)
+      setTimeout(() => navigate('/'), 900)
+    } catch (err) {
+      const body = err.response?.data
+      if (body?.verified === false) {
+        navigate('/create-account/verify', { state: { identifier: body.email || data.identifier } })
+        return
+      }
+      setAuthError(body?.message || 'Could not sign in. Please try again.')
+    }
   }
 
   return (
@@ -88,21 +102,22 @@ export default function SignIn() {
 
             {signedIn ? (
               <div className="mt-6 rounded-md border border-[#3c6e35]/30 bg-[#eef4e9] p-4 text-sm text-[#2f5929]">
-                You&rsquo;re signed in! Welcome back to Double Apple.{' '}
-                <Link to="/profile" className="font-semibold underline">
-                  View your profile
-                </Link>
-                .
+                You&rsquo;re signed in! Welcome back to Double Apple. Taking you home&hellip;
               </div>
             ) : (
               <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-6 flex flex-col gap-5">
+                {authError && (
+                  <p className="rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
+                    {authError}
+                  </p>
+                )}
                 <div>
                   <label className="mb-1.5 block text-sm font-bold text-[#1a1a17]">
-                    Email or mobile phone number
+                    Email
                   </label>
                   <input
-                    type="text"
-                    placeholder="Email or Mobile phone Number"
+                    type="email"
+                    placeholder="Your Email"
                     aria-invalid={errors.identifier ? 'true' : 'false'}
                     className={`w-full rounded-md border px-4 py-2.5 text-sm text-[#1a1a17] placeholder:text-[#9a988e] focus:outline-none focus:ring-2 ${
                       errors.identifier
@@ -110,11 +125,10 @@ export default function SignIn() {
                         : 'border-black/15 focus:ring-[#3c6e35]/40'
                     }`}
                     {...register('identifier', {
-                      required: 'Enter your email or mobile phone number',
-                      validate: (value) => {
-                        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-                        const isPhone = /^[0-9+\-\s()]{7,20}$/.test(value)
-                        return isEmail || isPhone || 'Enter a valid email or phone number'
+                      required: 'Enter your email',
+                      pattern: {
+                        value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                        message: 'Enter a valid email address',
                       },
                     })}
                   />

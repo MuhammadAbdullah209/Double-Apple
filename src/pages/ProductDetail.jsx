@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ALL_PRODUCTS, findProductBySlug, slugify } from '../data/products'
 import { StarIcon, CartIcon, ChevronDownIcon } from '../components/Icons'
 import ProductCard from '../components/ProductCard'
 import VisitUs from '../components/VisitUs'
 import { useCart } from '../context/CartContext'
+import { getProductById, getProducts } from '../api/products'
+import { getImageForCategory } from '../data/productImages'
 
 const CATEGORY_BLURB = {
   Kratom: 'Part of our Kratom lineup — Maeng Da, Red, Green, and White strains, lab-tested and ready to ship.',
@@ -100,15 +101,48 @@ function ShareIcon() {
 const TABS = ['Reviews', 'Discussion', 'FAQs']
 
 export default function ProductDetail() {
-  const { slug } = useParams()
+  const { id } = useParams()
   const navigate = useNavigate()
   const { addItem } = useCart()
-  const product = findProductBySlug(slug)
+  const [product, setProduct] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [related, setRelated] = useState([])
   const [qty, setQty] = useState(1)
   const [showFullDesc, setShowFullDesc] = useState(false)
   const [activeTab, setActiveTab] = useState('Reviews')
   const [openFaq, setOpenFaq] = useState(2)
   const [added, setAdded] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setProduct(null)
+    getProductById(id)
+      .then((data) => {
+        if (cancelled) return
+        setProduct(data.product)
+        return getProducts({ category: data.product.category, limit: 7 })
+      })
+      .then((relatedData) => {
+        if (cancelled || !relatedData) return
+        setRelated((relatedData.products || []).filter((p) => p._id !== id).slice(0, 6))
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [id])
+
+  if (loading) {
+    return (
+      <section className="mx-auto max-w-[1280px] px-5 py-20 text-center">
+        <p className="text-sm text-[#7a7a72]">Loading product&hellip;</p>
+      </section>
+    )
+  }
 
   if (!product) {
     return (
@@ -121,8 +155,11 @@ export default function ProductDetail() {
     )
   }
 
-  const subtotal = (parseFloat(product.price) * qty).toFixed(2)
-  const related = ALL_PRODUCTS.filter((p) => p.name !== product.name).slice(0, 6)
+  const soldOut = (product.stock ?? 0) <= 0
+  const hasDiscount = !!product.discountActive
+  const displayPrice = hasDiscount ? product.finalPrice : product.price
+  const image = getImageForCategory(product.category)
+  const subtotal = (parseFloat(displayPrice) * qty).toFixed(2)
   const blurb =
     CATEGORY_BLURB[product.category] ||
     `Part of our ${product.category} lineup at Double Apple Smoke & Vape.`
@@ -152,13 +189,13 @@ export default function ProductDetail() {
                       i === 0 ? 'border-[#3CA43C]' : 'border-transparent'
                     }`}
                   >
-                    <img src={product.image} alt="" className="h-full w-full object-contain" />
+                    <img src={image} alt="" className="h-full w-full object-contain" />
                   </button>
                 ))}
               </div>
 
               <div className="order-1 flex aspect-square items-center justify-center rounded-xl bg-[#f2f1ec] p-10 sm:order-2">
-                <img src={product.image} alt={product.name} className="h-full w-full object-contain" />
+                <img src={image} alt={product.name} className="h-full w-full object-contain" />
               </div>
             </div>
 
@@ -321,18 +358,23 @@ export default function ProductDetail() {
               <span>300 sold</span>
             </div>
 
-            {!product.soldOut && (
+            {!soldOut && (
               <span className="mt-3 inline-block rounded-full bg-[#eef4e9] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[#3c6e35]">
                 Best Seller
               </span>
             )}
 
-            <p className="mt-4 text-3xl font-extrabold text-[#1a1a17]">${product.price}</p>
+            <p className="mt-4 flex items-center gap-3">
+              <span className="text-3xl font-extrabold text-[#1a1a17]">${displayPrice}</span>
+              {hasDiscount && (
+                <span className="text-lg text-[#9a988e] line-through">${product.price}</span>
+              )}
+            </p>
 
             <p className="mt-4 text-sm leading-relaxed text-[#4a4a43]">
               {showFullDesc
-                ? `${blurb} Every batch is lab-tested for quality and freshness before it reaches the shelf. Stop by our Austin location or grab it in the shop for pickup.`
-                : blurb}{' '}
+                ? `${product.description || blurb} Every batch is lab-tested for quality and freshness before it reaches the shelf. Stop by our Austin location or grab it in the shop for pickup.`
+                : product.description || blurb}{' '}
               <button
                 type="button"
                 onClick={() => setShowFullDesc((v) => !v)}
@@ -345,11 +387,11 @@ export default function ProductDetail() {
             <p className="mt-6 text-sm font-bold text-[#1a1a17]">Availability</p>
             <div className="mt-2 flex items-center gap-2 rounded-md border border-black/10 px-4 py-3">
               <span
-                className={`h-2.5 w-2.5 rounded-full ${product.soldOut ? 'bg-red-500' : 'bg-[#3CA43C]'}`}
+                className={`h-2.5 w-2.5 rounded-full ${soldOut ? 'bg-red-500' : 'bg-[#3CA43C]'}`}
               />
               <div>
                 <p className="text-sm font-semibold text-[#1a1a17]">
-                  {product.soldOut ? 'Currently sold out' : 'In stock — ready for pickup'}
+                  {soldOut ? 'Currently sold out' : 'In stock — ready for pickup'}
                 </p>
                 <p className="text-xs text-[#7a7a72]">
                   Pickup at 11220 N Lamar Blvd B202, Austin, TX
@@ -387,7 +429,7 @@ export default function ProductDetail() {
             <div className="mt-4 flex flex-col gap-3">
               <button
                 type="button"
-                disabled={product.soldOut}
+                disabled={soldOut}
                 onClick={() => {
                   addItem(product, qty)
                   navigate('/cart')
@@ -398,7 +440,7 @@ export default function ProductDetail() {
               </button>
               <button
                 type="button"
-                disabled={product.soldOut}
+                disabled={soldOut}
                 onClick={() => {
                   addItem(product, qty)
                   setAdded(true)
@@ -437,7 +479,7 @@ export default function ProductDetail() {
         </div>
         <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
           {related.map((p) => (
-            <ProductCard key={p.name} product={p} />
+            <ProductCard key={p._id} product={p} />
           ))}
         </div>
       </section>

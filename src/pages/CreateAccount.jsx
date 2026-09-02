@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import BrandBadge from '../components/BrandBadge'
 import VisitUs from '../components/VisitUs'
+import { useAuth } from '../context/AuthContext'
 
 function EyeIcon({ off }) {
   return (
@@ -30,8 +31,10 @@ function Field({ label, error, children }) {
 
 export default function CreateAccount() {
   const navigate = useNavigate()
+  const { register: registerAccount } = useAuth()
   const [showPw, setShowPw] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [authError, setAuthError] = useState('')
 
   const {
     register,
@@ -43,8 +46,19 @@ export default function CreateAccount() {
   const password = watch('password')
 
   const onSubmit = async (data) => {
-    console.log('Create account:', data)
-    navigate('/create-account/verify', { state: { identifier: data.email } })
+    setAuthError('')
+    try {
+      await registerAccount({
+        firstname: data.firstname,
+        lastname: data.lastname,
+        email: data.email,
+        password: data.password,
+        phno: data.mobile,
+      })
+      navigate('/create-account/verify', { state: { identifier: data.email } })
+    } catch (err) {
+      setAuthError(err.response?.data?.message || 'Could not create your account. Please try again.')
+    }
   }
 
   return (
@@ -57,6 +71,41 @@ export default function CreateAccount() {
           <div className="mt-4 border-b border-black/10" />
 
           <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-6 flex flex-col gap-5">
+              {authError && (
+                <p className="rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
+                  {authError}
+                </p>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="First Name" error={errors.firstname}>
+                  <input
+                    type="text"
+                    placeholder="First Name"
+                    aria-invalid={errors.firstname ? 'true' : 'false'}
+                    className={`w-full rounded-md border px-4 py-2.5 text-sm text-[#1a1a17] placeholder:text-[#9a988e] focus:outline-none focus:ring-2 ${
+                      errors.firstname
+                        ? 'border-red-400 focus:ring-red-200'
+                        : 'border-black/15 focus:ring-[#3c6e35]/40'
+                    }`}
+                    {...register('firstname', {
+                      required: 'First name is required',
+                      pattern: { value: /^[a-zA-Z\s]+$/, message: 'Letters only' },
+                    })}
+                  />
+                </Field>
+                <Field label="Last Name" error={errors.lastname}>
+                  <input
+                    type="text"
+                    placeholder="Last Name"
+                    className="w-full rounded-md border border-black/15 px-4 py-2.5 text-sm text-[#1a1a17] placeholder:text-[#9a988e] focus:outline-none focus:ring-2 focus:ring-[#3c6e35]/40"
+                    {...register('lastname', {
+                      pattern: { value: /^[a-zA-Z\s]+$/, message: 'Letters only' },
+                    })}
+                  />
+                </Field>
+              </div>
+
               <Field label="Email" error={errors.email}>
                 <input
                   type="email"
@@ -89,8 +138,8 @@ export default function CreateAccount() {
                   }`}
                   {...register('mobile', {
                     pattern: {
-                      value: /^[0-9+\-\s()]{7,20}$/,
-                      message: 'Enter a valid phone number',
+                      value: /^\+?\d{10,15}$/,
+                      message: 'Enter a valid phone number (10-15 digits, optional +)',
                     },
                   })}
                 />
@@ -110,9 +159,9 @@ export default function CreateAccount() {
                     {...register('password', {
                       required: 'Password is required',
                       pattern: {
-                        value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/,
+                        value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/,
                         message:
-                          'Must be at least 8 characters with 1 upper case letter, 1 lower case letter and 1 number',
+                          'Must be at least 6 characters with 1 upper case letter, 1 lower case letter, 1 number and 1 special character (@$!%*?&)',
                       },
                     })}
                   />
@@ -127,8 +176,8 @@ export default function CreateAccount() {
                 </div>
                 {!errors.password && (
                   <p className="mt-2 text-xs leading-relaxed text-[#8a897f]">
-                    Password at least 8 characters and includes at least 1 upper case letter, 1
-                    lower case letter and 1 number.
+                    Password at least 6 characters and includes at least 1 upper case letter, 1
+                    lower case letter, 1 number and 1 special character (@$!%*?&).
                   </p>
                 )}
               </Field>

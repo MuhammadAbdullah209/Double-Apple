@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ChevronDownIcon } from '../components/Icons'
 import ProductCard from '../components/ProductCard'
 import VisitUs from '../components/VisitUs'
-import { ALL_PRODUCTS } from '../data/products'
+import { getProducts } from '../api/products'
 
 const CATEGORIES = [
   'Flower',
@@ -30,6 +30,13 @@ export default function Shop() {
   const [perPage, setPerPage] = useState(9)
   const [page, setPage] = useState(1)
 
+  const [products, setProducts] = useState([])
+  const [totalPages, setTotalPages] = useState(1)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  const [relatedProducts, setRelatedProducts] = useState([])
+
   const toggleCategory = (cat) => {
     setSelectedCategories((prev) =>
       prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
@@ -37,30 +44,55 @@ export default function Shop() {
     setPage(1)
   }
 
-  const filtered = useMemo(() => {
-    let list = ALL_PRODUCTS.filter((p) => {
-      const inCategory =
-        selectedCategories.length === 0 || selectedCategories.includes(p.category)
-      const price = parseFloat(p.price)
-      const aboveMin = !minPrice || price >= parseFloat(minPrice)
-      const belowMax = !maxPrice || price <= parseFloat(maxPrice)
-      return inCategory && aboveMin && belowMax
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setError('')
+    getProducts({
+      page,
+      limit: perPage,
+      category: selectedCategories.length === 1 ? selectedCategories[0] : undefined,
     })
+      .then((data) => {
+        if (cancelled) return
+        let list = data.products || []
 
-    if (sortBy === 'price-asc') {
-      list = [...list].sort((a, b) => parseFloat(a.price) - parseFloat(b.price))
-    } else if (sortBy === 'price-desc') {
-      list = [...list].sort((a, b) => parseFloat(b.price) - parseFloat(a.price))
+        // client-side: price range and multi-category (backend only filters by one category)
+        list = list.filter((p) => {
+          const price = p.finalPrice ?? p.price
+          const inCategory = selectedCategories.length === 0 || selectedCategories.includes(p.category)
+          const aboveMin = !minPrice || price >= parseFloat(minPrice)
+          const belowMax = !maxPrice || price <= parseFloat(maxPrice)
+          return inCategory && aboveMin && belowMax
+        })
+
+        if (sortBy === 'price-asc') {
+          list = [...list].sort((a, b) => (a.finalPrice ?? a.price) - (b.finalPrice ?? b.price))
+        } else if (sortBy === 'price-desc') {
+          list = [...list].sort((a, b) => (b.finalPrice ?? b.price) - (a.finalPrice ?? a.price))
+        }
+
+        setProducts(list)
+        setTotalPages(Math.max(1, data.totalPages || 1))
+      })
+      .catch(() => {
+        if (!cancelled) setError('Could not load products right now. Please try again shortly.')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
     }
+  }, [page, perPage, selectedCategories, minPrice, maxPrice, sortBy])
 
-    return list
-  }, [selectedCategories, minPrice, maxPrice, sortBy])
+  useEffect(() => {
+    getProducts({ page: 1, limit: 6 })
+      .then((data) => setRelatedProducts(data.products || []))
+      .catch(() => setRelatedProducts([]))
+  }, [])
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage))
   const currentPage = Math.min(page, totalPages)
-  const pageItems = filtered.slice((currentPage - 1) * perPage, currentPage * perPage)
-
-  const relatedProducts = ALL_PRODUCTS.slice(0, 6)
 
   return (
     <>
@@ -178,14 +210,18 @@ export default function Shop() {
               </div>
             </div>
 
-            {pageItems.length === 0 ? (
+            {loading ? (
+              <p className="py-16 text-center text-sm text-[#7a7a72]">Loading products&hellip;</p>
+            ) : error ? (
+              <p className="py-16 text-center text-sm text-red-500">{error}</p>
+            ) : products.length === 0 ? (
               <p className="py-16 text-center text-sm text-[#7a7a72]">
                 No products match your filters.
               </p>
             ) : (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {pageItems.map((p) => (
-                  <ProductCard key={p.name} product={p} />
+                {products.map((p) => (
+                  <ProductCard key={p._id} product={p} />
                 ))}
               </div>
             )}
@@ -231,19 +267,21 @@ export default function Shop() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-[1280px] border-t border-black/10 px-5 py-10 lg:px-10">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-[#1a1a17]">Related Products</h2>
-          <a href="#" className="text-sm font-semibold text-[#3c6e35] hover:underline">
-            View all
-          </a>
-        </div>
-        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
-          {relatedProducts.map((p) => (
-            <ProductCard key={p.name} product={p} />
-          ))}
-        </div>
-      </section>
+      {relatedProducts.length > 0 && (
+        <section className="mx-auto max-w-[1280px] border-t border-black/10 px-5 py-10 lg:px-10">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-xl font-bold text-[#1a1a17]">Related Products</h2>
+            <a href="#" className="text-sm font-semibold text-[#3c6e35] hover:underline">
+              View all
+            </a>
+          </div>
+          <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
+            {relatedProducts.map((p) => (
+              <ProductCard key={p._id} product={p} />
+            ))}
+          </div>
+        </section>
+      )}
 
       <VisitUs />
     </>

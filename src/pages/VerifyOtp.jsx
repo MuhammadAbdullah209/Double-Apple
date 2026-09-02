@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import BrandBadge from '../components/BrandBadge'
 import VisitUs from '../components/VisitUs'
+import { useAuth } from '../context/AuthContext'
 
 function maskIdentifier(value) {
   if (!value) return ''
@@ -17,9 +18,12 @@ export default function VerifyOtp() {
   const location = useLocation()
   const navigate = useNavigate()
   const identifier = location.state?.identifier
+  const { verify, reverify } = useAuth()
 
   const [submitted, setSubmitted] = useState(false)
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS)
+  const [verifyError, setVerifyError] = useState('')
+  const [resendMessage, setResendMessage] = useState('')
   const inputRefs = useRef([])
 
   const {
@@ -45,9 +49,25 @@ export default function VerifyOtp() {
   const ss = String(Math.max(secondsLeft, 0) % 60).padStart(2, '0')
 
   const onSubmit = async (data) => {
-    console.log('Verify OTP:', { identifier, code: data.digits.join('') })
-    await new Promise((r) => setTimeout(r, 400))
-    setSubmitted(true)
+    setVerifyError('')
+    try {
+      await verify(identifier, data.digits.join(''))
+      setSubmitted(true)
+    } catch (err) {
+      setVerifyError(err.response?.data?.message || 'Invalid or expired code. Please try again.')
+    }
+  }
+
+  const handleResend = async () => {
+    setVerifyError('')
+    setResendMessage('')
+    try {
+      await reverify(identifier)
+      setSecondsLeft(RESEND_SECONDS)
+      setResendMessage('A new code has been sent.')
+    } catch (err) {
+      setVerifyError(err.response?.data?.message || 'Could not resend code. Please try again.')
+    }
   }
 
   const handleDigitChange = (index, value, onChange) => {
@@ -139,6 +159,16 @@ export default function VerifyOtp() {
                     </p>
                   )}
 
+                  {verifyError && (
+                    <p className="mt-3 rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
+                      {verifyError}
+                    </p>
+                  )}
+
+                  {resendMessage && !verifyError && (
+                    <p className="mt-3 text-xs font-medium text-[#2f5929]">{resendMessage}</p>
+                  )}
+
                   <p className="mt-6 text-sm text-[#4a4a43]">
                     {secondsLeft > 0 ? (
                       <>
@@ -147,7 +177,7 @@ export default function VerifyOtp() {
                     ) : (
                       <button
                         type="button"
-                        onClick={() => setSecondsLeft(RESEND_SECONDS)}
+                        onClick={handleResend}
                         className="font-semibold text-[#3c6e35] hover:underline"
                       >
                         Resend code

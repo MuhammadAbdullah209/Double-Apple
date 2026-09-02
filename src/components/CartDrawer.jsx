@@ -97,14 +97,14 @@ export default function CartDrawer() {
             <div className="flex-1 overflow-y-auto px-5 py-4">
               <div className="flex flex-col gap-4">
                 {items.map((item) => (
-                  <div key={item.slug} className="flex items-start gap-3">
+                  <div key={item._id} className="flex items-start gap-3">
                     <div className="grid h-16 w-16 shrink-0 place-items-center rounded-md bg-[#f2f1ec] p-2">
                       <img src={item.image} alt={item.name} className="h-full w-full object-contain" />
                     </div>
 
                     <div className="min-w-0 flex-1">
                       <Link
-                        to={`/shop/${item.slug}`}
+                        to={`/shop/${item._id}`}
                         onClick={closeCart}
                         className="line-clamp-2 text-xs font-bold uppercase tracking-wide text-[#1a1a17] hover:text-[#3c6e35]"
                       >
@@ -117,7 +117,7 @@ export default function CartDrawer() {
                           <button
                             type="button"
                             aria-label="Decrease quantity"
-                            onClick={() => updateQty(item.slug, item.qty - 1)}
+                            onClick={() => updateQty(item._id, item.qty - 1)}
                             className="grid h-7 w-7 place-items-center text-[#4a4a43] hover:bg-black/5"
                           >
                             <MinusIcon />
@@ -128,7 +128,7 @@ export default function CartDrawer() {
                           <button
                             type="button"
                             aria-label="Increase quantity"
-                            onClick={() => updateQty(item.slug, item.qty + 1)}
+                            onClick={() => updateQty(item._id, item.qty + 1)}
                             className="grid h-7 w-7 place-items-center text-[#4a4a43] hover:bg-black/5"
                           >
                             <PlusIcon />
@@ -137,7 +137,7 @@ export default function CartDrawer() {
                         <button
                           type="button"
                           aria-label="Remove item"
-                          onClick={() => removeItem(item.slug)}
+                          onClick={() => removeItem(item._id)}
                           className="text-[#9a988e] hover:text-red-500"
                         >
                           <TrashIcon />

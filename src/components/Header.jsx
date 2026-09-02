@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 import logo from "../assets/images/doubleapple.png";
 import ShopMegaMenu from "./ShopMegaMenu";
 
@@ -169,8 +170,17 @@ function Logo() {
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [shopMenuOpen, setShopMenuOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const { count: cartCount, openCart } = useCart();
+  const { isAuthenticated, user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    setAccountMenuOpen(false);
+    await logout();
+    navigate("/");
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full bg-[#050509]">
@@ -351,24 +361,88 @@ export default function Header() {
 
           {/* USER */}
 
-          <Link
-            to="/sign-in"
-            aria-label="Account"
-            className="
-              flex
-              h-[30px]
-              w-[26px]
-              shrink-0
-              items-center
-              justify-center
-              border-0
-              bg-transparent
-              p-0
-              text-white/80
-            "
-          >
-            <UserIcon />
-          </Link>
+          {isAuthenticated ? (
+            <div
+              className="relative flex h-full items-center"
+              onMouseEnter={() => setAccountMenuOpen(true)}
+              onMouseLeave={() => setAccountMenuOpen(false)}
+            >
+              <button
+                type="button"
+                aria-label="Account"
+                onClick={() => setAccountMenuOpen((v) => !v)}
+                className="
+                  flex
+                  h-[30px]
+                  w-[26px]
+                  shrink-0
+                  items-center
+                  justify-center
+                  border-0
+                  bg-transparent
+                  p-0
+                  text-[#54bd3b]
+                "
+              >
+                <UserIcon />
+              </button>
+
+              {accountMenuOpen && (
+                <div
+                  className="
+                    absolute
+                    right-0
+                    top-full
+                    w-[180px]
+                    overflow-hidden
+                    rounded-[4px]
+                    border
+                    border-black/10
+                    bg-white
+                    py-1
+                    shadow-lg
+                  "
+                >
+                  <p className="truncate px-4 py-1.5 text-[12px] font-semibold text-[#1a1a17]">
+                    {user?.firstname ? `Hi, ${user.firstname}` : "My Account"}
+                  </p>
+                  <Link
+                    to="/profile"
+                    onClick={() => setAccountMenuOpen(false)}
+                    className="block px-4 py-1.5 text-[13px] text-[#4a4a43] no-underline hover:bg-black/5"
+                  >
+                    Profile
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="block w-full border-0 bg-transparent px-4 py-1.5 text-left text-[13px] text-[#4a4a43] hover:bg-black/5"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              to="/sign-in"
+              aria-label="Account"
+              className="
+                flex
+                h-[30px]
+                w-[26px]
+                shrink-0
+                items-center
+                justify-center
+                border-0
+                bg-transparent
+                p-0
+                text-white/80
+              "
+            >
+              <UserIcon />
+            </Link>
+          )}
 
 
           {/* CART */}
@@ -528,6 +602,36 @@ export default function Header() {
               {item.label}
             </Link>
           ))}
+
+          {isAuthenticated ? (
+            <>
+              <Link
+                to="/profile"
+                onClick={() => setMenuOpen(false)}
+                className="block py-2 font-sans text-sm font-medium text-white/80 no-underline"
+              >
+                Profile
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  handleLogout();
+                }}
+                className="block w-full border-0 bg-transparent py-2 text-left font-sans text-sm font-medium text-white/80"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link
+              to="/sign-in"
+              onClick={() => setMenuOpen(false)}
+              className="block py-2 font-sans text-sm font-medium text-white/80 no-underline"
+            >
+              Sign In
+            </Link>
+          )}
 
           <div
             className="

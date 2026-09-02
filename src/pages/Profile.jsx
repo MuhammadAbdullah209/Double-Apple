@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { ChevronDownIcon } from '../components/Icons'
+import { useAuth } from '../context/AuthContext'
 
 function MailIcon({ className = 'h-4 w-4' }) {
   return (
@@ -24,8 +24,6 @@ function CameraIcon({ className = 'h-3.5 w-3.5' }) {
   )
 }
 
-const PROFILE_EMAIL = 'jordan.miller@gmail.com'
-
 function Field({ label, children }) {
   return (
     <div>
@@ -38,28 +36,58 @@ function Field({ label, children }) {
 }
 
 export default function Profile() {
+  const { user, updateProfile, loading: authLoading } = useAuth()
   const [editing, setEditing] = useState(false)
   const [photo, setPhoto] = useState(null)
+  const [saveError, setSaveError] = useState('')
+  const [saveSuccess, setSaveSuccess] = useState('')
   const fileInputRef = useRef(null)
   const {
     register,
     handleSubmit,
+    reset,
     formState: { isSubmitting },
   } = useForm({
     defaultValues: {
-      fullName: 'Jordan Miller',
-      nickName: 'Jordan',
-      gender: 'Female',
-      country: 'United States',
-      language: 'English',
-      timeZone: 'Central Time (US & Canada)',
+      firstname: '',
+      lastname: '',
+      phno: '',
+      street: '',
+      city: '',
+      province: '',
+      postalCode: '',
+      country: '',
+      password: '',
     },
   })
 
+  useEffect(() => {
+    if (!user) return
+    reset({
+      firstname: user.firstname || '',
+      lastname: user.lastname || '',
+      phno: user.phno || '',
+      street: user.address?.street || '',
+      city: user.address?.city || '',
+      province: user.address?.province || '',
+      postalCode: user.address?.postalCode || '',
+      country: user.address?.country || '',
+      password: '',
+    })
+  }, [user, reset])
+
   const onSubmit = async (data) => {
-    console.log('Profile update:', data)
-    await new Promise((r) => setTimeout(r, 400))
-    setEditing(false)
+    setSaveError('')
+    setSaveSuccess('')
+    try {
+      const payload = { ...data }
+      if (!payload.password) delete payload.password
+      await updateProfile(payload)
+      setSaveSuccess('Profile updated successfully.')
+      setEditing(false)
+    } catch (err) {
+      setSaveError(err.response?.data?.message || 'Could not update your profile. Please try again.')
+    }
   }
 
   const handlePhotoChange = (e) => {
@@ -82,6 +110,25 @@ export default function Profile() {
   const inputClass =
     'w-full rounded-md border border-black/15 bg-[#f7f6f2] px-4 py-2.5 text-sm text-[#1a1a17] outline-none focus:outline-none focus:ring-2 focus:ring-[#3c6e35]/40 disabled:cursor-not-allowed disabled:text-[#6b6b6b]'
 
+  if (authLoading) {
+    return (
+      <section className="mx-auto max-w-3xl px-5 py-16 text-center text-sm text-[#7a7a72]">
+        Loading your profile…
+      </section>
+    )
+  }
+
+  if (!user) {
+    return (
+      <section className="mx-auto max-w-3xl px-5 py-16 text-center text-sm text-[#7a7a72]">
+        Please sign in to view your profile.
+      </section>
+    )
+  }
+
+  const fullName = [user.firstname, user.lastname].filter(Boolean).join(' ')
+  const initial = (user.firstname || 'U').charAt(0).toUpperCase()
+
   return (
     <section className="mx-auto max-w-3xl px-5 py-10 lg:px-10">
       <div className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm">
@@ -99,7 +146,7 @@ export default function Profile() {
                   />
                 ) : (
                   <span className="grid h-16 w-16 place-items-center rounded-full border-4 border-white bg-[#3c6e35] text-xl font-bold text-white shadow-sm">
-                    J
+                    {initial}
                   </span>
                 )}
                 <button
@@ -119,8 +166,8 @@ export default function Profile() {
                 />
               </div>
               <div>
-                <p className="text-base font-extrabold text-[#1a1a17]">Jordan Miller</p>
-                <p className="text-sm text-[#9a988e]">{PROFILE_EMAIL}</p>
+                <p className="text-base font-extrabold text-[#1a1a17]">{fullName || 'Your Account'}</p>
+                <p className="text-sm text-[#9a988e]">{user.email}</p>
                 {photo && (
                   <button
                     type="button"
@@ -134,7 +181,11 @@ export default function Profile() {
             </div>
             <button
               type="button"
-              onClick={() => setEditing((v) => !v)}
+              onClick={() => {
+                setEditing((v) => !v)
+                setSaveError('')
+                setSaveSuccess('')
+              }}
               className="shrink-0 rounded-md bg-[#3CA43C] px-5 py-2 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-[#2f8a30]"
             >
               {editing ? 'Cancel' : 'Edit'}
@@ -142,69 +193,53 @@ export default function Profile() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <Field label="Full Name">
-              <input disabled={!editing} className={inputClass} {...register('fullName')} />
+            {saveError && (
+              <p className="sm:col-span-2 rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
+                {saveError}
+              </p>
+            )}
+            {saveSuccess && (
+              <p className="sm:col-span-2 rounded-md bg-[#eef4e9] px-3 py-2 text-xs font-medium text-[#2f5929]">
+                {saveSuccess}
+              </p>
+            )}
+
+            <Field label="First Name">
+              <input disabled={!editing} className={inputClass} {...register('firstname')} />
             </Field>
-            <Field label="Nick Name">
-              <input disabled={!editing} className={inputClass} {...register('nickName')} />
+            <Field label="Last Name">
+              <input disabled={!editing} className={inputClass} {...register('lastname')} />
             </Field>
 
-            <Field label="Gender">
-              <div className="relative">
-                <select
-                  disabled={!editing}
-                  className={`${inputClass} appearance-none`}
-                  {...register('gender')}
-                >
-                  <option>Female</option>
-                  <option>Male</option>
-                  <option>Prefer not to say</option>
-                </select>
-                <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9a988e]" />
-              </div>
+            <Field label="Phone Number">
+              <input disabled={!editing} className={inputClass} {...register('phno')} />
             </Field>
+            <Field label="New Password">
+              <input
+                disabled={!editing}
+                type="password"
+                placeholder="Leave blank to keep current password"
+                className={inputClass}
+                {...register('password')}
+              />
+            </Field>
+
+            <Field label="Street Address">
+              <input disabled={!editing} className={inputClass} {...register('street')} />
+            </Field>
+            <Field label="City">
+              <input disabled={!editing} className={inputClass} {...register('city')} />
+            </Field>
+
+            <Field label="Province / State">
+              <input disabled={!editing} className={inputClass} {...register('province')} />
+            </Field>
+            <Field label="Postal Code">
+              <input disabled={!editing} className={inputClass} {...register('postalCode')} />
+            </Field>
+
             <Field label="Country">
-              <div className="relative">
-                <select
-                  disabled={!editing}
-                  className={`${inputClass} appearance-none`}
-                  {...register('country')}
-                >
-                  <option>United States</option>
-                  <option>Canada</option>
-                  <option>United Kingdom</option>
-                </select>
-                <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9a988e]" />
-              </div>
-            </Field>
-
-            <Field label="Language">
-              <div className="relative">
-                <select
-                  disabled={!editing}
-                  className={`${inputClass} appearance-none`}
-                  {...register('language')}
-                >
-                  <option>English</option>
-                  <option>Spanish</option>
-                </select>
-                <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9a988e]" />
-              </div>
-            </Field>
-            <Field label="Time Zone">
-              <div className="relative">
-                <select
-                  disabled={!editing}
-                  className={`${inputClass} appearance-none`}
-                  {...register('timeZone')}
-                >
-                  <option>Central Time (US &amp; Canada)</option>
-                  <option>Eastern Time (US &amp; Canada)</option>
-                  <option>Mountain Time (US &amp; Canada)</option>
-                  <option>Pacific Time (US &amp; Canada)</option>
-                </select>
-                <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9a988e]" />
-              </div>
+              <input disabled={!editing} className={inputClass} {...register('country')} />
             </Field>
 
             {editing && (
@@ -227,8 +262,8 @@ export default function Profile() {
                 <MailIcon />
               </span>
               <div>
-                <p className="text-sm font-semibold text-[#1a1a17]">{PROFILE_EMAIL}</p>
-                <p className="text-xs text-[#9a988e]">1 month ago</p>
+                <p className="text-sm font-semibold text-[#1a1a17]">{user.email}</p>
+                <p className="text-xs text-[#9a988e]">Email cannot be changed</p>
               </div>
             </div>
           </div>
