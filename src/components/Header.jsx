@@ -210,7 +210,7 @@ export default function Header() {
             items-center
             justify-center
             gap-10
-            md:flex
+            lg:flex
           "
         >
 
@@ -287,7 +287,7 @@ export default function Header() {
             hidden
             items-center
             gap-3
-            md:flex
+            lg:flex
           "
         >
 
@@ -435,7 +435,7 @@ export default function Header() {
             border-0
             bg-transparent
             p-1
-            md:hidden
+            lg:hidden
           "
         >
 
@@ -502,7 +502,7 @@ export default function Header() {
             px-6
             pb-4
             pt-2
-            md:hidden
+            lg:hidden
           "
         >
 
