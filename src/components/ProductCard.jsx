@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { CartIcon, StarIcon } from './Icons'
 import { getImageForCategory } from '../data/productImages'
 import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
+import { useWishlist } from '../context/WishlistContext'
 
 function CheckIcon() {
   return (
@@ -12,9 +14,15 @@ function CheckIcon() {
   )
 }
 
-function HeartIcon() {
+function HeartIcon({ filled = false }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+    <svg
+      viewBox="0 0 24 24"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-4 w-4"
+    >
       <path
         d="M12 20.5s-7.5-4.6-9.8-9.2C.6 7.7 2.6 4.5 6 4.5c2 0 3.6 1.1 4.5 2.6.9-1.5 2.5-2.6 4.5-2.6 3.4 0 5.4 3.2 3.8 6.8-2.3 4.6-9.8 9.2-9.8 9.2z"
         strokeLinejoin="round"
@@ -24,11 +32,15 @@ function HeartIcon() {
 }
 
 export default function ProductCard({ product }) {
+  const navigate = useNavigate()
   const { addItem } = useCart()
+  const { isAuthenticated } = useAuth()
+  const { isWishlisted, toggleWishlist } = useWishlist()
   const [added, setAdded] = useState(false)
   const soldOut = (product.stock ?? 0) <= 0
   const image = getImageForCategory(product.category)
   const hasDiscount = !!product.discountActive
+  const wishlisted = isWishlisted(product._id)
 
   const handleAddToCart = (e) => {
     e.preventDefault()
@@ -36,6 +48,15 @@ export default function ProductCard({ product }) {
     addItem(product, 1)
     setAdded(true)
     setTimeout(() => setAdded(false), 1200)
+  }
+
+  const handleWishlist = (e) => {
+    e.preventDefault()
+    if (!isAuthenticated) {
+      navigate('/sign-in')
+      return
+    }
+    toggleWishlist(product)
   }
 
   return (
@@ -57,11 +78,13 @@ export default function ProductCard({ product }) {
         </button>
         <button
           type="button"
-          aria-label="Add to wishlist"
-          onClick={(e) => e.preventDefault()}
-          className="absolute right-5 top-5 z-10 grid h-8 w-8 place-items-center rounded-full bg-white text-[#4a4a43] shadow-sm"
+          aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          onClick={handleWishlist}
+          className={`absolute right-5 top-5 z-10 grid h-8 w-8 place-items-center rounded-full bg-white shadow-sm transition ${
+            wishlisted ? 'text-red-500' : 'text-[#4a4a43]'
+          }`}
         >
-          <HeartIcon />
+          <HeartIcon filled={wishlisted} />
         </button>
         <div className="flex aspect-square items-center justify-center p-4">
           <img src={image} alt={product.name} className="h-full w-full object-contain rounded-md" />

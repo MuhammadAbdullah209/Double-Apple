@@ -26,6 +26,7 @@ export default defineConfig(({ mode }) => {
         '/Product': proxyTarget,
         '/Order': proxyTarget,
         '/Address': proxyTarget,
+        '/Wishlist': proxyTarget,
       },
     },
   }

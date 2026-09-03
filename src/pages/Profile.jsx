@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useAuth } from '../context/AuthContext'
+import { useWishlist } from '../context/WishlistContext'
 import { getMyOrders, cancelOrder } from '../api/orders'
 import { StarIcon } from '../components/Icons'
+import ProductCard from '../components/ProductCard'
 
 /* ================================
    ICONS
@@ -222,6 +224,34 @@ function ComingSoon({ title, Icon, description }) {
       </span>
       <p className="text-base font-bold text-[#1a1a17]">{title}</p>
       <p className="max-w-sm text-sm text-[#7a7a72]">{description}</p>
+    </div>
+  )
+}
+
+function WishlistPanel() {
+  const { items, loading } = useWishlist()
+
+  return (
+    <div className="rounded-2xl border border-black/10 bg-white shadow-sm">
+      <div className="border-b border-black/10 px-6 py-5">
+        <h2 className="text-lg font-bold text-[#1a1a17]">My Wishlist</h2>
+      </div>
+
+      <div className="p-6">
+        {loading ? (
+          <p className="py-10 text-center text-sm text-[#7a7a72]">Loading your wishlist&hellip;</p>
+        ) : items.length === 0 ? (
+          <p className="py-10 text-center text-sm text-[#7a7a72]">
+            You haven&rsquo;t saved anything yet — tap the heart on a product to add it here.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map((product) => (
+              <ProductCard key={product._id} product={product} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -811,13 +841,7 @@ export default function Profile() {
               description="Reviews you've left on products will show up here. This feature is coming soon."
             />
           )}
-          {activeTab === 'wishlist' && (
-            <ComingSoon
-              Icon={HeartIcon}
-              title="My Wishlist"
-              description="Save products you love to come back to later. This feature is coming soon."
-            />
-          )}
+          {activeTab === 'wishlist' && <WishlistPanel />}
           {activeTab === 'payment' && (
             <ComingSoon
               Icon={CardIcon}

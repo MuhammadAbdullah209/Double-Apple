@@ -4,6 +4,7 @@
     { "source": "/Product/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Product/:path*" },
     { "source": "/Order/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Order/:path*" },
     { "source": "/Address/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Address/:path*" },
+    { "source": "/Wishlist/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Wishlist/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

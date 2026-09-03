@@ -4,6 +4,8 @@ import { StarIcon, CartIcon, ChevronDownIcon } from '../components/Icons'
 import ProductCard from '../components/ProductCard'
 import VisitUs from '../components/VisitUs'
 import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
+import { useWishlist } from '../context/WishlistContext'
 import { getProductById, getProducts } from '../api/products'
 import { getImageForCategory } from '../data/productImages'
 
@@ -76,9 +78,15 @@ function PlusIconSmall() {
 //   )
 // }
 
-function HeartOutline() {
+function HeartOutline({ filled = false }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+    <svg
+      viewBox="0 0 24 24"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-4 w-4"
+    >
       <path
         d="M12 20.5s-7.5-4.6-9.8-9.2C.6 7.7 2.6 4.5 6 4.5c2 0 3.6 1.1 4.5 2.6.9-1.5 2.5-2.6 4.5-2.6 3.4 0 5.4 3.2 3.8 6.8-2.3 4.6-9.8 9.2-9.8 9.2z"
         strokeLinejoin="round"
@@ -104,6 +112,8 @@ export default function ProductDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { addItem } = useCart()
+  const { isAuthenticated } = useAuth()
+  const { isWishlisted, toggleWishlist } = useWishlist()
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
   const [related, setRelated] = useState([])
@@ -458,8 +468,21 @@ export default function ProductDetail() {
                 <ChatIcon /> Chat
               </button> */}
               <span className="h-4 w-px bg-black/10" />
-              <button type="button" className="flex items-center gap-1.5 hover:text-[#3c6e35]">
-                <HeartOutline /> Wishlist
+              <button
+                type="button"
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    navigate('/sign-in')
+                    return
+                  }
+                  toggleWishlist(product)
+                }}
+                className={`flex items-center gap-1.5 hover:text-[#3c6e35] ${
+                  isWishlisted(product._id) ? 'text-red-500' : ''
+                }`}
+              >
+                <HeartOutline filled={isWishlisted(product._id)} />
+                {isWishlisted(product._id) ? 'Wishlisted' : 'Wishlist'}
               </button>
               <span className="h-4 w-px bg-black/10" />
               <button type="button" className="flex items-center gap-1.5 hover:text-[#3c6e35]">
