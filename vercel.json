@@ -1,9 +1,14 @@
 {
   "rewrites": [
+    { "source": "/Api/", "destination": "https://triple-buzz-store-backend-one.vercel.app/Api" },
     { "source": "/Api/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Api/:path*" },
+    { "source": "/Product/", "destination": "https://triple-buzz-store-backend-one.vercel.app/Product" },
     { "source": "/Product/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Product/:path*" },
+    { "source": "/Order/", "destination": "https://triple-buzz-store-backend-one.vercel.app/Order" },
     { "source": "/Order/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Order/:path*" },
+    { "source": "/Address/", "destination": "https://triple-buzz-store-backend-one.vercel.app/Address" },
     { "source": "/Address/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Address/:path*" },
+    { "source": "/Wishlist/", "destination": "https://triple-buzz-store-backend-one.vercel.app/Wishlist" },
     { "source": "/Wishlist/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Wishlist/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]

@@ -21,7 +21,10 @@ export function logout() {
 }
 
 export function getProfile() {
-  return api.get('/Api/').then((r) => r.data)
+  // No trailing slash: Vercel's rewrite for /Api/:path* doesn't match a bare
+  // "/Api/" with an empty path segment, so it silently fell through to the
+  // SPA's index.html instead of reaching the backend.
+  return api.get('/Api').then((r) => r.data)
 }
 
 export function updateProfile(payload) {
