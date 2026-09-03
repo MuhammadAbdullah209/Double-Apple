@@ -137,6 +137,7 @@ export default function CreateAccount() {
                       : 'border-black/15 focus:ring-[#3c6e35]/40'
                   }`}
                   {...register('mobile', {
+                    required: 'Mobile number is required',
                     pattern: {
                       value: /^\+?\d{10,15}$/,
                       message: 'Enter a valid phone number (10-15 digits, optional +)',

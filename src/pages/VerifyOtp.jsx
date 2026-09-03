@@ -11,7 +11,7 @@ function maskIdentifier(value) {
   return `${value.slice(0, 2)}${'*'.repeat(7)}${value.slice(-3)}`
 }
 
-const CODE_LENGTH = 4
+const CODE_LENGTH = 8
 const RESEND_SECONDS = 30
 
 export default function VerifyOtp() {
@@ -30,6 +30,7 @@ export default function VerifyOtp() {
     control,
     handleSubmit,
     setFocus,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm({ defaultValues: { digits: Array(CODE_LENGTH).fill('') } })
 
@@ -84,6 +85,15 @@ export default function VerifyOtp() {
     }
   }
 
+  const handlePaste = (index, e) => {
+    const digits = e.clipboardData.getData('text').replace(/\D/g, '')
+    if (!digits) return
+    e.preventDefault()
+    const chars = digits.slice(0, CODE_LENGTH - index).split('')
+    chars.forEach((digit, i) => setValue(`digits.${index + i}`, digit))
+    setFocus(`digits.${Math.min(index + chars.length, CODE_LENGTH - 1)}`)
+  }
+
   const hasError = errors.digits && Object.values(errors.digits).some(Boolean)
 
   return (
@@ -123,7 +133,7 @@ export default function VerifyOtp() {
                 </p>
 
                 <form onSubmit={handleSubmit(onSubmit)} noValidate>
-                  <div className="mt-6 flex justify-center gap-3">
+                  <div className="mt-6 flex flex-wrap justify-center gap-2">
                     {Array.from({ length: CODE_LENGTH }).map((_, i) => (
                       <Controller
                         key={i}
@@ -142,8 +152,9 @@ export default function VerifyOtp() {
                             value={field.value}
                             onChange={(e) => handleDigitChange(i, e.target.value, field.onChange)}
                             onKeyDown={(e) => handleKeyDown(i, e, field.value)}
+                            onPaste={(e) => handlePaste(i, e)}
                             aria-label={`Digit ${i + 1}`}
-                            className={`h-16 w-14 rounded-md border text-center text-xl font-semibold text-[#1a1a17] focus:outline-none focus:ring-2 ${
+                            className={`h-12 w-9 rounded-md border text-center text-lg font-semibold text-[#1a1a17] focus:outline-none focus:ring-2 sm:h-14 sm:w-11 sm:text-xl ${
                               hasError
                                 ? 'border-red-400 focus:ring-red-200'
                                 : 'border-black/20 focus:ring-[#3c6e35]/40'
@@ -155,7 +166,7 @@ export default function VerifyOtp() {
                   </div>
                   {hasError && (
                     <p className="mt-2 text-xs font-medium text-red-600">
-                      Enter the 4-digit code we sent you
+                      Enter the {CODE_LENGTH}-digit code we sent you
                     </p>
                   )}
 
