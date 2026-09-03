@@ -2,6 +2,14 @@ import { Link } from 'react-router-dom'
 import { SocialIcon } from './Icons'
 import logo from '../assets/images/doubleapple.png'
 
+const SOCIAL_LINKS = {
+  facebook: 'https://www.facebook.com/Doubleapplesmokeshop/',
+  instagram: 'https://www.instagram.com/doubleapplesmokeatx/',
+  twitter: 'https://x.com/ShopDouble10142',
+  tiktok: 'https://www.tiktok.com/@doubleapplesmokes5',
+  youtube: 'https://www.youtube.com/@DoubleSmoke',
+}
+
 const LINK_ROUTES = {
   'About Us': '/about-us',
   'Contact Us': '/contact-us',
@@ -12,12 +20,22 @@ const LINK_ROUTES = {
   Shipping: '/shipping-policy',
   'Terms of Services': '/terms-of-service',
   'Refund Policy': '/refund-policy',
+  // Shop column — routes to the Shop page pre-filtered by category (matches
+  // Shop.jsx's CATEGORIES list). "Hookah" maps to its closest real category;
+  // "Accessories" has no matching category there, so it links to the
+  // unfiltered shop instead of a misleading filter.
+  Flower: '/shop?category=Flower',
+  Vapes: '/shop?category=Vapes',
+  Kratom: '/shop?category=Kratom',
+  Hookah: '/shop?category=Disposable Hookah',
+  'Refill Pods': '/shop?category=Refill Pods',
+  Accessories: '/shop',
 }
 
 const COLUMNS = [
   {
     title: 'About',
-    links: ['About Us', 'Our Story', 'Blog', 'Contact Us', 'Careers'],
+    links: ['About Us', 'Blog', 'Contact Us'],
   },
   {
     title: 'Shop',
@@ -45,10 +63,12 @@ export default function Footer() {
             Central Texas.
           </p>
           <div className="mt-5 flex items-center gap-3">
-            {['facebook', 'instagram', 'twitter'].map((s) => (
+            {['facebook', 'instagram', 'twitter', 'tiktok', 'youtube'].map((s) => (
               <a
                 key={s}
-                href="#"
+                href={SOCIAL_LINKS[s]}
+                target="_blank"
+                rel="noopener noreferrer"
                 aria-label={s}
                 className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white/70 transition hover:bg-[#3c6e35] hover:text-white"
               >
