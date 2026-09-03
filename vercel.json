@@ -1,5 +1,9 @@
 {
   "rewrites": [
+    { "source": "/Api/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Api/:path*" },
+    { "source": "/Product/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Product/:path*" },
+    { "source": "/Order/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Order/:path*" },
+    { "source": "/Address/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Address/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
