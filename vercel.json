@@ -10,6 +10,8 @@
     { "source": "/Address/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Address/:path*" },
     { "source": "/Wishlist/", "destination": "https://triple-buzz-store-backend-one.vercel.app/Wishlist" },
     { "source": "/Wishlist/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Wishlist/:path*" },
+    { "source": "/Review/", "destination": "https://triple-buzz-store-backend-one.vercel.app/Review" },
+    { "source": "/Review/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Review/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

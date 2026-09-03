@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuth } from '../context/AuthContext'
 import { useWishlist } from '../context/WishlistContext'
 import { getMyOrders, cancelOrder } from '../api/orders'
+import { getMyReviews, deleteReview } from '../api/reviews'
 import { StarIcon } from '../components/Icons'
 import ProductCard from '../components/ProductCard'
 
@@ -373,6 +375,117 @@ function OrdersPanel() {
                 </div>
               )
             })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ReviewsPanel() {
+  const [reviews, setReviews] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [deletingId, setDeletingId] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    getMyReviews()
+      .then((data) => {
+        if (!cancelled) setReviews(data.reviews || [])
+      })
+      .catch(() => {
+        if (!cancelled) setError('Could not load your reviews right now.')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const handleDelete = async (productId) => {
+    setDeletingId(productId)
+    try {
+      await deleteReview(productId)
+      setReviews((prev) => prev.filter((r) => r.product?._id !== productId))
+    } catch {
+      setError('Could not delete that review. Please try again.')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-black/10 bg-white shadow-sm">
+      <div className="border-b border-black/10 px-6 py-5">
+        <h2 className="text-lg font-bold text-[#1a1a17]">My Rating & Reviews</h2>
+      </div>
+
+      <div className="p-6">
+        {error && (
+          <p className="mb-4 rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
+            {error}
+          </p>
+        )}
+
+        {loading ? (
+          <p className="py-10 text-center text-sm text-[#7a7a72]">Loading your reviews&hellip;</p>
+        ) : reviews.length === 0 ? (
+          <p className="py-10 text-center text-sm text-[#7a7a72]">
+            You haven&rsquo;t reviewed any products yet.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {reviews.map((review) => (
+              <div key={review._id} className="rounded-xl border border-black/10 p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    {review.product ? (
+                      <Link
+                        to={`/shop/${review.product._id}`}
+                        className="text-sm font-bold text-[#1a1a17] hover:text-[#3c6e35]"
+                      >
+                        {review.product.name}
+                      </Link>
+                    ) : (
+                      <p className="text-sm font-bold text-[#9a988e]">Product no longer available</p>
+                    )}
+                    <div className="mt-1.5 flex gap-0.5">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <StarIcon
+                          key={i}
+                          className={`h-3.5 w-3.5 ${
+                            i < review.rating ? 'text-[#3CA43C]' : 'text-black/10'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  {review.product && (
+                    <button
+                      type="button"
+                      disabled={deletingId === review.product._id}
+                      onClick={() => handleDelete(review.product._id)}
+                      className="shrink-0 rounded-md border border-red-300 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-red-500 transition hover:bg-red-50 disabled:opacity-50"
+                    >
+                      {deletingId === review.product._id ? 'Deleting…' : 'Delete'}
+                    </button>
+                  )}
+                </div>
+                {review.comment && (
+                  <p className="mt-3 text-sm leading-relaxed text-[#4a4a43]">{review.comment}</p>
+                )}
+                <p className="mt-2 text-xs text-[#9a988e]">
+                  {new Date(review.createdAt).toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </p>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -834,13 +947,7 @@ export default function Profile() {
               description="Need to cancel a pending order? Head to My Orders — cancellation is available there while an order is still pending."
             />
           )}
-          {activeTab === 'reviews' && (
-            <ComingSoon
-              Icon={StarIcon}
-              title="My Rating & Reviews"
-              description="Reviews you've left on products will show up here. This feature is coming soon."
-            />
-          )}
+          {activeTab === 'reviews' && <ReviewsPanel />}
           {activeTab === 'wishlist' && <WishlistPanel />}
           {activeTab === 'payment' && (
             <ComingSoon

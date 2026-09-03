@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { StarIcon, CartIcon, ChevronDownIcon } from '../components/Icons'
 import ProductCard from '../components/ProductCard'
@@ -7,6 +7,7 @@ import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { useWishlist } from '../context/WishlistContext'
 import { getProductById, getProducts } from '../api/products'
+import * as reviewsApi from '../api/reviews'
 import { getImageForCategory } from '../data/productImages'
 
 const CATEGORY_BLURB = {
@@ -29,26 +30,29 @@ const PRODUCT_FAQS = [
   },
 ]
 
-const REVIEWS = [
-  {
-    name: 'Jordan M.',
-    date: 'Sep 12, 2026',
-    rating: 5,
-    text: 'Great quality and fast pickup. Staff walked me through everything I needed to know.',
-  },
-  {
-    name: 'Casey R.',
-    date: 'Aug 28, 2026',
-    rating: 5,
-    text: 'This is my go-to now. Consistent quality every time I visit the shop.',
-  },
-  {
-    name: 'Alex P.',
-    date: 'Aug 14, 2026',
-    rating: 5,
-    text: 'Exactly what I was looking for. Will definitely order again.',
-  },
-]
+function reviewerName(user) {
+  if (!user) return 'Anonymous'
+  const lastInitial = user.lastname ? `${user.lastname[0]}.` : ''
+  return [user.firstname, lastInitial].filter(Boolean).join(' ')
+}
+
+function StarPicker({ value, onChange }) {
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <button
+          key={n}
+          type="button"
+          aria-label={`${n} star${n === 1 ? '' : 's'}`}
+          onClick={() => onChange(n)}
+          className="p-0.5"
+        >
+          <StarIcon className={`h-6 w-6 ${n <= value ? 'text-[#3CA43C]' : 'text-black/10'}`} />
+        </button>
+      ))}
+    </div>
+  )
+}
 
 function MinusIcon() {
   return (
@@ -112,7 +116,7 @@ export default function ProductDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { addItem } = useCart()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
   const { isWishlisted, toggleWishlist } = useWishlist()
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -122,6 +126,67 @@ export default function ProductDetail() {
   const [activeTab, setActiveTab] = useState('Reviews')
   const [openFaq, setOpenFaq] = useState(2)
   const [added, setAdded] = useState(false)
+
+  const [reviews, setReviews] = useState([])
+  const [reviewSummary, setReviewSummary] = useState({ average: 0, total: 0, breakdown: {} })
+  const [reviewSort, setReviewSort] = useState('latest')
+  const [showReviewForm, setShowReviewForm] = useState(false)
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewComment, setReviewComment] = useState('')
+  const [reviewSubmitting, setReviewSubmitting] = useState(false)
+  const [reviewError, setReviewError] = useState('')
+
+  const myReview = useMemo(
+    () => reviews.find((r) => r.user?._id === user?._id),
+    [reviews, user]
+  )
+
+  const sortedReviews = useMemo(() => {
+    const copy = [...reviews]
+    if (reviewSort === 'rating') copy.sort((a, b) => b.rating - a.rating)
+    else copy.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    return copy
+  }, [reviews, reviewSort])
+
+  const loadReviews = (productId) => {
+    reviewsApi
+      .getProductReviews(productId)
+      .then((data) => {
+        setReviews(data.reviews || [])
+        setReviewSummary(data.summary || { average: 0, total: 0, breakdown: {} })
+      })
+      .catch(() => {})
+  }
+
+  useEffect(() => {
+    loadReviews(id)
+  }, [id])
+
+  const openReviewForm = () => {
+    if (!isAuthenticated) {
+      navigate('/sign-in')
+      return
+    }
+    setReviewRating(myReview?.rating || 5)
+    setReviewComment(myReview?.comment || '')
+    setReviewError('')
+    setShowReviewForm(true)
+  }
+
+  const submitReview = async (e) => {
+    e.preventDefault()
+    setReviewSubmitting(true)
+    setReviewError('')
+    try {
+      await reviewsApi.writeReview(id, { rating: reviewRating, comment: reviewComment })
+      loadReviews(id)
+      setShowReviewForm(false)
+    } catch (err) {
+      setReviewError(err.response?.data?.message || 'Could not save your review. Please try again.')
+    } finally {
+      setReviewSubmitting(false)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -237,16 +302,20 @@ export default function ProductDetail() {
                     <div className="flex items-center gap-3">
                       <StarIcon className="h-8 w-8 text-[#3CA43C]" />
                       <div>
-                        <p className="text-3xl font-extrabold text-[#1a1a17]">5.0/5.0</p>
+                        <p className="text-3xl font-extrabold text-[#1a1a17]">
+                          {reviewSummary.average || 0}/5.0
+                        </p>
                         <p className="text-xs text-[#7a7a72]">
-                          {REVIEWS.length} ratings &bull; {REVIEWS.length} reviews
+                          {reviewSummary.total || 0} ratings &bull; {reviewSummary.total || 0} reviews
                         </p>
                       </div>
                     </div>
                     <div className="mt-5 flex flex-col gap-2">
                       {[5, 4, 3, 2, 1].map((star) => {
-                        const count = REVIEWS.filter((r) => r.rating === star).length
-                        const pct = Math.round((count / REVIEWS.length) * 100)
+                        const count = reviewSummary.breakdown?.[star] || 0
+                        const pct = reviewSummary.total
+                          ? Math.round((count / reviewSummary.total) * 100)
+                          : 0
                         return (
                           <div key={star} className="flex items-center gap-2 text-xs text-[#4a4a43]">
                             <span className="flex w-8 items-center gap-0.5">
@@ -269,45 +338,115 @@ export default function ProductDetail() {
                     <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-[#1a1a17]">Sort by</span>
-                        <select className="rounded-md border border-black/15 px-3 py-1.5 text-sm text-[#1a1a17] focus:outline-none">
-                          <option>Latest</option>
-                          <option>Highest rated</option>
+                        <select
+                          value={reviewSort}
+                          onChange={(e) => setReviewSort(e.target.value)}
+                          className="rounded-md border border-black/15 px-3 py-1.5 text-sm text-[#1a1a17] focus:outline-none"
+                        >
+                          <option value="latest">Latest</option>
+                          <option value="rating">Highest rated</option>
                         </select>
                       </div>
                       <button
                         type="button"
+                        onClick={openReviewForm}
                         className="rounded-md border border-[#3CA43C] px-4 py-2 text-xs font-bold uppercase tracking-wide text-[#3CA43C] hover:bg-[#eef4e9]"
                       >
-                        Write Review
+                        {myReview ? 'Edit Your Review' : 'Write Review'}
                       </button>
                     </div>
 
-                    <div className="flex flex-col gap-6">
-                      {REVIEWS.map((r) => (
-                        <div key={r.name} className="border-b border-black/10 pb-6">
-                          <div className="flex items-center gap-3">
-                            <span className="grid h-9 w-9 place-items-center rounded-full bg-[#3c6e35] text-xs font-bold text-white">
-                              {r.name[0]}
-                            </span>
-                            <div>
-                              <p className="text-sm font-bold text-[#1a1a17]">{r.name}</p>
-                              <p className="text-xs text-[#9a988e]">{r.date}</p>
-                            </div>
-                          </div>
-                          <div className="mt-2 flex gap-0.5">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <StarIcon
-                                key={i}
-                                className={`h-3.5 w-3.5 ${
-                                  i < r.rating ? 'text-[#3CA43C]' : 'text-black/10'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <p className="mt-2 text-sm leading-relaxed text-[#4a4a43]">{r.text}</p>
+                    {showReviewForm && (
+                      <form
+                        onSubmit={submitReview}
+                        className="mb-6 flex flex-col gap-3 rounded-xl border border-black/10 p-5"
+                      >
+                        {reviewError && (
+                          <p className="rounded-md bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
+                            {reviewError}
+                          </p>
+                        )}
+                        <div>
+                          <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-[#7a7a72]">
+                            Your Rating
+                          </p>
+                          <StarPicker value={reviewRating} onChange={setReviewRating} />
                         </div>
-                      ))}
-                    </div>
+                        <div>
+                          <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-[#7a7a72]">
+                            Your Review
+                          </p>
+                          <textarea
+                            rows={3}
+                            value={reviewComment}
+                            onChange={(e) => setReviewComment(e.target.value)}
+                            placeholder="Tell other shoppers what you thought…"
+                            className="w-full rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
+                          />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="submit"
+                            disabled={reviewSubmitting}
+                            className="rounded-md bg-[#3CA43C] px-5 py-2 text-xs font-bold uppercase tracking-wide text-white hover:bg-[#2f8a30] disabled:opacity-60"
+                          >
+                            {reviewSubmitting ? 'Saving…' : 'Submit Review'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowReviewForm(false)}
+                            className="text-xs font-semibold text-[#7a7a72] hover:underline"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    )}
+
+                    {sortedReviews.length === 0 ? (
+                      <p className="py-10 text-center text-sm text-[#7a7a72]">
+                        No reviews yet — be the first to share your thoughts.
+                      </p>
+                    ) : (
+                      <div className="flex flex-col gap-6">
+                        {sortedReviews.map((r) => (
+                          <div key={r._id} className="border-b border-black/10 pb-6">
+                            <div className="flex items-center gap-3">
+                              <span className="grid h-9 w-9 place-items-center rounded-full bg-[#3c6e35] text-xs font-bold text-white">
+                                {(r.user?.firstname || 'A')[0]}
+                              </span>
+                              <div>
+                                <p className="text-sm font-bold text-[#1a1a17]">
+                                  {reviewerName(r.user)}
+                                </p>
+                                <p className="text-xs text-[#9a988e]">
+                                  {new Date(r.createdAt).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric',
+                                  })}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="mt-2 flex gap-0.5">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <StarIcon
+                                  key={i}
+                                  className={`h-3.5 w-3.5 ${
+                                    i < r.rating ? 'text-[#3CA43C]' : 'text-black/10'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            {r.comment && (
+                              <p className="mt-2 text-sm leading-relaxed text-[#4a4a43]">
+                                {r.comment}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -365,9 +504,9 @@ export default function ProductDetail() {
 
             <div className="mt-2 flex items-center gap-1.5 text-sm text-[#4a4a43]">
               <StarIcon className="h-4 w-4 text-[#3CA43C]" />
-              <span className="font-semibold text-[#1a1a17]">5.0/5.0</span>
+              <span className="font-semibold text-[#1a1a17]">{reviewSummary.average || 0}/5.0</span>
               <span className="text-[#c9c8c0]">|</span>
-              <span>{REVIEWS.length} Reviews</span>
+              <span>{reviewSummary.total || 0} Reviews</span>
               <span className="text-[#c9c8c0]">|</span>
               <span>300 sold</span>
             </div>
