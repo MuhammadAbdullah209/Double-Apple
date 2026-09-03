@@ -1,7 +1,7 @@
 import api from './client'
 
-export function register({ firstname, lastname, email, password, phno }) {
-  return api.post('/Api/register', { firstname, lastname, email, password, phno }).then((r) => r.data)
+export function register({ firstname, lastname, email, password, phno, gender }) {
+  return api.post('/Api/register', { firstname, lastname, email, password, phno, gender }).then((r) => r.data)
 }
 
 export function login(email, password) {

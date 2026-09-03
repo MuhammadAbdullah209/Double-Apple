@@ -54,6 +54,7 @@ export default function CreateAccount() {
         email: data.email,
         password: data.password,
         phno: data.mobile,
+        gender: data.gender,
       })
       navigate('/create-account/verify', { state: { identifier: data.email } })
     } catch (err) {
@@ -105,6 +106,25 @@ export default function CreateAccount() {
                   />
                 </Field>
               </div>
+
+              <Field label="Gender">
+                <div className="flex flex-wrap gap-5">
+                  {['male', 'female', 'other'].map((option) => (
+                    <label
+                      key={option}
+                      className="flex items-center gap-2 text-sm capitalize text-[#4a4a43]"
+                    >
+                      <input
+                        type="radio"
+                        value={option}
+                        className="h-4 w-4 accent-[#3c6e35]"
+                        {...register('gender')}
+                      />
+                      {option}
+                    </label>
+                  ))}
+                </div>
+              </Field>
 
               <Field label="Email" error={errors.email}>
                 <input
