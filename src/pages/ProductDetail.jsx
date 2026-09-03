@@ -127,18 +127,22 @@ export default function ProductDetail() {
     let cancelled = false
     setLoading(true)
     setProduct(null)
+    setRelated([])
     getProductById(id)
       .then((data) => {
         if (cancelled) return
+        // Render the product as soon as it's ready — related products are a
+        // secondary section and shouldn't hold up the whole page behind a
+        // second, sequential network round-trip.
         setProduct(data.product)
+        setLoading(false)
         return getProducts({ category: data.product.category, limit: 7 })
       })
       .then((relatedData) => {
         if (cancelled || !relatedData) return
         setRelated((relatedData.products || []).filter((p) => p._id !== id).slice(0, 6))
       })
-      .catch(() => {})
-      .finally(() => {
+      .catch(() => {
         if (!cancelled) setLoading(false)
       })
     return () => {
