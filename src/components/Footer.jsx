@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { SocialIcon } from './Icons'
 import logo from '../assets/images/doubleapple.png'
 
@@ -5,6 +6,12 @@ const LINK_ROUTES = {
   'About Us': '/about-us',
   'Contact Us': '/contact-us',
   Blog: '/blog',
+  FAQ: '/faq',
+  'Privacy Policy': '/privacy-policy',
+  Returns: '/return-policy',
+  Shipping: '/shipping-policy',
+  'Terms of Services': '/terms-of-service',
+  'Refund Policy': '/refund-policy',
 }
 
 const COLUMNS = [
@@ -18,7 +25,7 @@ const COLUMNS = [
   },
   {
     title: 'Support',
-    links: ['FAQ', 'Shipping', 'Returns', 'Store Hours', 'Directions'],
+    links: ['FAQ', 'Shipping', 'Returns', 'Privacy Policy', 'Terms of Services', 'Refund Policy'],
   },
 ]
 
@@ -55,16 +62,24 @@ export default function Footer() {
           <div key={col.title}>
             <p className="text-xs font-bold uppercase tracking-wide text-white">{col.title}</p>
             <ul className="mt-4 flex flex-col gap-2.5">
-              {col.links.map((link) => (
-                <li key={link}>
-                  <a
-                    href={LINK_ROUTES[link] || '#'}
-                    className="text-[13px] text-white/55 transition hover:text-white"
-                  >
-                    {link}
-                  </a>
-                </li>
-              ))}
+              {col.links.map((link) =>
+                LINK_ROUTES[link] ? (
+                  <li key={link}>
+                    <Link
+                      to={LINK_ROUTES[link]}
+                      className="text-[13px] text-white/55 transition hover:text-white"
+                    >
+                      {link}
+                    </Link>
+                  </li>
+                ) : (
+                  <li key={link}>
+                    <a href="#" className="text-[13px] text-white/55 transition hover:text-white">
+                      {link}
+                    </a>
+                  </li>
+                )
+              )}
             </ul>
           </div>
         ))}

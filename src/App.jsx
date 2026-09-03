@@ -12,6 +12,12 @@ import AboutUs from './pages/AboutUs'
 import ContactUs from './pages/ContactUs'
 import Blog from './pages/Blog'
 import Profile from './pages/Profile'
+import FAQPage from './pages/FAQPage'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import ReturnPolicy from './pages/ReturnPolicy'
+import ShippingPolicy from './pages/ShippingPolicy'
+import TermsOfService from './pages/TermsOfService'
+import RefundPolicy from './pages/RefundPolicy'
 
 function App() {
   return (
@@ -29,6 +35,12 @@ function App() {
           <Route path="/about-us" element={<AboutUs />} />
           <Route path="/contact-us" element={<ContactUs />} />
           <Route path="/blog" element={<Blog />} />
+          <Route path="/faq" element={<FAQPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/return-policy" element={<ReturnPolicy />} />
+          <Route path="/shipping-policy" element={<ShippingPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/refund-policy" element={<RefundPolicy />} />
           <Route path="/profile" element={<Profile />} />
         </Route>
       </Routes>
