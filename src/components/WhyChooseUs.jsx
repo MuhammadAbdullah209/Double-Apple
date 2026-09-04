@@ -3,9 +3,9 @@ import leafPattern from '../assets/images/leaf-pattern.webp'
 
 const STATS = [
   { title: 'Largest Selection', text: 'Over 2,000 products across vapes, THCA, hookah, kratom, CBD, glass, and accessories' },
-  { title: 'Largest Selection', text: 'Over 2,000 products across vapes, THCA, hookah, kratom, CBD, glass, and accessories' },
-  { title: 'Largest Selection', text: 'Over 2,000 products across vapes, THCA, hookah, kratom, CBD, glass, and accessories' },
-  { title: 'Largest Selection', text: 'Over 2,000 products across vapes, THCA, hookah, kratom, CBD, glass, and accessories' },
+  { title: 'Best Prices in Austin', text: 'We price match and always offer the most competitive rates on every product' },
+  { title: 'Always In Stock', text: 'New arrivals every week so you always find the latest and best products' },
+  { title: 'Open Late 7 Days', text: 'Open daily from 8AM to 12AM so we are always here when you need us' },
 ]
 
 export default function WhyChooseUs() {

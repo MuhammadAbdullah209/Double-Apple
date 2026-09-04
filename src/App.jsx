@@ -11,6 +11,7 @@ import Cart from './pages/Cart'
 import AboutUs from './pages/AboutUs'
 import ContactUs from './pages/ContactUs'
 import Blog from './pages/Blog'
+import BlogDetail from './pages/BlogDetail'
 import Profile from './pages/Profile'
 import FAQPage from './pages/FAQPage'
 import PrivacyPolicy from './pages/PrivacyPolicy'
@@ -35,6 +36,7 @@ function App() {
           <Route path="/about-us" element={<AboutUs />} />
           <Route path="/contact-us" element={<ContactUs />} />
           <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogDetail />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/return-policy" element={<ReturnPolicy />} />

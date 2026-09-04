@@ -2,7 +2,7 @@ import shopShelves from '../assets/images/shop-shelves.jpg'
 import { ArrowRightIcon } from './Icons'
 
 const POINTS = [
-  'Our budtenders are experts who are passionate about the plant. Ask anything.',
+  'Disposable vapes and refill pods from Geek Bar, Lost Mary, Elf Bar, and Off Stamp',
   'Hookah and shisha from leading brands',
   'Kratom in every strain: Maeng Da, Red Vein, Green Vein, and White Vein',
   'Glass pipes, hand pipes, bangers, ash catchers, and bowls',
@@ -44,11 +44,20 @@ export default function TopShop() {
         <img
           src={shopShelves}
           alt="Double Apple shop shelves stocked with product"
-          className="aspect-[4/3] w-full rounded-2xl object-cover"
+          className="aspect-square w-full rounded-2xl object-cover"
         />
 
         <div>
-          <ul className="flex flex-col">
+          <p className="text-sm leading-relaxed text-[#5c5b53] sm:text-base">
+            Our range covers everything a smoker needs. THCA flower, THC vapes, delta-9
+            gummies, CBD oil, and THC drinks are all in stock. Each one meets Texas state
+            regulations.
+          </p>
+          <p className="mt-4 text-sm leading-relaxed text-[#5c5b53] sm:text-base">
+            Looking for the top vape brands? We carry them all:
+          </p>
+
+          <ul className="mt-4 flex flex-col">
             {POINTS.map((point, i) => (
               <li
                 key={point}
@@ -61,6 +70,12 @@ export default function TopShop() {
               </li>
             ))}
           </ul>
+
+          <p className="mt-4 text-sm leading-relaxed text-[#5c5b53] sm:text-base">
+            We serve customers across Central Texas. That includes Austin, Round Rock,
+            Georgetown, Cedar Park, San Marcos, Kyle, Buda, Hutto, Taylor, and Waco. Wherever
+            you are, Double Apple is your go-to smoke shop.
+          </p>
         </div>
       </div>
 

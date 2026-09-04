@@ -12,6 +12,8 @@
     { "source": "/Wishlist/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Wishlist/:path*" },
     { "source": "/Review/", "destination": "https://triple-buzz-store-backend-one.vercel.app/Review" },
     { "source": "/Review/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Review/:path*" },
+    { "source": "/Blog/", "destination": "https://triple-buzz-store-backend-one.vercel.app/Blog" },
+    { "source": "/Blog/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Blog/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

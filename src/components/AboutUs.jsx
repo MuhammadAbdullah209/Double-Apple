@@ -17,11 +17,29 @@ export default function AboutUs() {
             Austin and Central Texas shop with us every day. They choose Double Apple for three
             reasons: a large selection, low prices, and a friendly team.
           </p>
+          <p className="mt-4 text-sm leading-relaxed text-[#1a1a17] sm:text-base">
+            Searching for a smoke shop near you Austin or a vape shop in Austin, TX? Double
+            Apple is your answer. We keep one of the largest product ranges in the city under
+            one roof:
+          </p>
+          <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-relaxed text-[#1a1a17] sm:text-base">
+            <li>Disposable vapes and THC vapes</li>
+            <li>THCA flower and pre-rolls</li>
+            <li>Hookah and shisha</li>
+            <li>Kratom and CBD gummies</li>
+            <li>THC drinks</li>
+            <li>Glass pipes, hand pipes, and grinders</li>
+            <li>Rolling papers, e-hookah, refill pods, and accessories</li>
+          </ul>
+          <p className="mt-4 text-sm leading-relaxed text-[#1a1a17] sm:text-base">
+            Our team knows these products well. We help you find the right product at the right
+            price. Stop by today and see why locals call us the best smoke shop in Austin.
+          </p>
         </div>
         <img
           src={storeInterior}
           alt="Double Apple store interior shelves"
-          className="aspect-[4/3] w-full rounded-2xl object-cover"
+          className="aspect-[3/4] w-full rounded-2xl object-cover"
         />
       </div>
     </section>
