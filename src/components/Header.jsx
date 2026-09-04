@@ -171,6 +171,7 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [shopMenuOpen, setShopMenuOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { count: cartCount, openCart } = useCart();
   const { isAuthenticated, user, logout } = useAuth();
   const location = useLocation();
@@ -180,6 +181,14 @@ export default function Header() {
     setAccountMenuOpen(false);
     await logout();
     navigate("/");
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const query = searchQuery.trim();
+    const base = location.pathname.startsWith("/blog") ? "/blog" : "/shop";
+    navigate(query ? `${base}?search=${encodeURIComponent(query)}` : base);
+    setMenuOpen(false);
   };
 
   return (
@@ -303,7 +312,8 @@ export default function Header() {
 
           {/* SEARCH */}
 
-          <div
+          <form
+            onSubmit={handleSearch}
             className="
               flex
               h-[30px]
@@ -320,6 +330,8 @@ export default function Header() {
             <input
               type="text"
               placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="
                 min-w-0
                 flex-1
@@ -337,7 +349,7 @@ export default function Header() {
             />
 
             <button
-              type="button"
+              type="submit"
               aria-label="Search"
               className="
                 mr-[4px]
@@ -356,7 +368,7 @@ export default function Header() {
               <SearchIcon />
             </button>
 
-          </div>
+          </form>
 
 
           {/* USER */}
@@ -633,7 +645,8 @@ export default function Header() {
             </Link>
           )}
 
-          <div
+          <form
+            onSubmit={handleSearch}
             className="
               mt-2
               flex
@@ -648,6 +661,8 @@ export default function Header() {
             <input
               type="text"
               placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="
                 min-w-1
                 flex-1
@@ -661,7 +676,7 @@ export default function Header() {
             />
 
             <button
-              type="button"
+              type="submit"
               aria-label="Search"
               className="
                 mr-[3px]
@@ -680,7 +695,7 @@ export default function Header() {
               <SearchIcon />
             </button>
 
-          </div>
+          </form>
 
         </nav>
       )}

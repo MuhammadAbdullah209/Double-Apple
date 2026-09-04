@@ -129,7 +129,7 @@ export default function Testimonials() {
       <div className="mt-9 text-center">
         <a
           href="#"
-          className="inline-flex items-center gap-2 rounded-md bg-[#3c6e35] px-7 py-3 text-sm font-semibold text-white transition hover:bg-[#345f2e]"
+          className="inline-flex items-center gap-2  bg-[#3da130] px-7 py-3 text-sm font-semibold text-black transition hover:bg-[#345f2e]"
         >
           Leave a Review
           <ArrowRightIcon className="h-4 w-4" />

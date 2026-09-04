@@ -24,6 +24,7 @@ export default function Shop() {
   const [selectedCategories, setSelectedCategories] = useState(
     initialCategory && CATEGORIES.includes(initialCategory) ? [initialCategory] : []
   )
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
   const [sortBy, setSortBy] = useState('latest')
@@ -31,7 +32,7 @@ export default function Shop() {
   const [page, setPage] = useState(1)
 
   const [products, setProducts] = useState([])
-  const [totalPages, setTotalPages] = useState(1)
+  const [hasNextPage, setHasNextPage] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -45,6 +46,11 @@ export default function Shop() {
   }
 
   useEffect(() => {
+    setSearchQuery(searchParams.get('search') || '')
+    setPage(1)
+  }, [searchParams])
+
+  useEffect(() => {
     let cancelled = false
     setLoading(true)
     setError('')
@@ -52,18 +58,25 @@ export default function Shop() {
       page,
       limit: perPage,
       category: selectedCategories.length === 1 ? selectedCategories[0] : undefined,
+      search: searchQuery || undefined,
     })
       .then((data) => {
         if (cancelled) return
         let list = data.products || []
 
-        // client-side: price range and multi-category (backend only filters by one category)
+        // Backend doesn't return a total/totalPages count, so infer whether another
+        // page exists from whether this page came back full.
+        setHasNextPage(list.length === perPage)
+
+        // client-side: price range, multi-category, and name search (backend only filters by one category)
+        const q = searchQuery.trim().toLowerCase()
         list = list.filter((p) => {
           const price = p.finalPrice ?? p.price
           const inCategory = selectedCategories.length === 0 || selectedCategories.includes(p.category)
           const aboveMin = !minPrice || price >= parseFloat(minPrice)
           const belowMax = !maxPrice || price <= parseFloat(maxPrice)
-          return inCategory && aboveMin && belowMax
+          const matchesQuery = !q || p.name?.toLowerCase().includes(q)
+          return inCategory && aboveMin && belowMax && matchesQuery
         })
 
         if (sortBy === 'price-asc') {
@@ -73,7 +86,6 @@ export default function Shop() {
         }
 
         setProducts(list)
-        setTotalPages(Math.max(1, data.totalPages || 1))
       })
       .catch(() => {
         if (!cancelled) setError('Could not load products right now. Please try again shortly.')
@@ -84,15 +96,13 @@ export default function Shop() {
     return () => {
       cancelled = true
     }
-  }, [page, perPage, selectedCategories, minPrice, maxPrice, sortBy])
+  }, [page, perPage, selectedCategories, minPrice, maxPrice, sortBy, searchQuery])
 
   useEffect(() => {
     getProducts({ page: 1, limit: 6 })
       .then((data) => setRelatedProducts(data.products || []))
       .catch(() => setRelatedProducts([]))
   }, [])
-
-  const currentPage = Math.min(page, totalPages)
 
   return (
     <>
@@ -226,36 +236,28 @@ export default function Shop() {
               </div>
             )}
 
-            {totalPages > 1 && (
+            {(page > 1 || hasNextPage) && (
               <div className="mt-10 flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  {Array.from({ length: totalPages }).map((_, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setPage(i + 1)}
-                      className={`grid h-9 w-9 place-items-center rounded-md text-sm font-semibold transition ${currentPage === i + 1
-                          ? 'bg-[#3CA43C] text-white'
-                          : 'text-[#4a4a43] hover:bg-black/5'
-                        }`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-                </div>
+                <p className="text-sm text-[#4a4a43]">Page {page}</p>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    disabled={currentPage === 1}
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    onClick={() => {
+                      setPage((p) => Math.max(1, p - 1))
+                      window.scrollTo({ top: 0, behavior: 'smooth' })
+                    }}
                     className="flex items-center gap-1.5 rounded-md border border-black/15 px-4 py-2 text-sm font-semibold text-[#1a1a17] transition hover:bg-black/[0.02] disabled:opacity-40"
                   >
                     &larr; Previous
                   </button>
                   <button
                     type="button"
-                    disabled={currentPage === totalPages}
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={!hasNextPage}
+                    onClick={() => {
+                      setPage((p) => p + 1)
+                      window.scrollTo({ top: 0, behavior: 'smooth' })
+                    }}
                     className="flex items-center gap-1.5 rounded-md border border-black/15 px-4 py-2 text-sm font-semibold text-[#1a1a17] transition hover:bg-black/[0.02] disabled:opacity-40"
                   >
                     Next &rarr;

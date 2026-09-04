@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import VisitUs from '../components/VisitUs'
 import { ArrowRightIcon } from '../components/Icons'
 import { BLOG_POSTS, slugify } from '../data/blogPosts'
@@ -28,9 +28,26 @@ function CommentIcon({ className = 'h-3.5 w-3.5' }) {
 const POSTS_PER_PAGE = 2
 
 export default function Blog() {
+  const [searchParams] = useSearchParams()
+  const searchQuery = searchParams.get('search') || ''
   const [page, setPage] = useState(1)
-  const totalPages = Math.max(1, Math.ceil(BLOG_POSTS.length / POSTS_PER_PAGE))
-  const visiblePosts = BLOG_POSTS.slice((page - 1) * POSTS_PER_PAGE, page * POSTS_PER_PAGE)
+
+  useEffect(() => {
+    setPage(1)
+  }, [searchQuery])
+
+  const q = searchQuery.trim().toLowerCase()
+  const filteredPosts = q
+    ? BLOG_POSTS.filter(
+        (post) =>
+          post.title.toLowerCase().includes(q) ||
+          post.excerpt.toLowerCase().includes(q) ||
+          post.tag.toLowerCase().includes(q)
+      )
+    : BLOG_POSTS
+
+  const totalPages = Math.max(1, Math.ceil(filteredPosts.length / POSTS_PER_PAGE))
+  const visiblePosts = filteredPosts.slice((page - 1) * POSTS_PER_PAGE, page * POSTS_PER_PAGE)
 
   const goToPage = (n) => {
     setPage(n)
@@ -50,6 +67,20 @@ export default function Blog() {
       </div>
 
       <section className="mx-auto max-w-[1280px] px-5 py-10 lg:px-10">
+        {searchQuery && (
+          <p className="mb-8 text-sm text-[#6b6b6b]">
+            {filteredPosts.length > 0
+              ? `${filteredPosts.length} result${filteredPosts.length === 1 ? '' : 's'} for `
+              : 'No posts found for '}
+            <span className="font-semibold text-[#1a1a17]">&ldquo;{searchQuery}&rdquo;</span>
+          </p>
+        )}
+
+        {filteredPosts.length === 0 ? (
+          <p className="py-16 text-center text-sm text-[#7a7a72]">
+            No blog posts match your search. Try a different keyword.
+          </p>
+        ) : (
         <div className="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
           {visiblePosts.map((post) => (
             <article key={post.title} className="flex flex-col">
@@ -89,8 +120,9 @@ export default function Blog() {
             </article>
           ))}
         </div>
+        )}
 
-        {totalPages > 1 && (
+        {filteredPosts.length > 0 && totalPages > 1 && (
           <div className="mt-12 flex items-center justify-center gap-2">
             {Array.from({ length: totalPages }).map((_, i) => (
               <button
