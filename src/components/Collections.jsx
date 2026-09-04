@@ -1,26 +1,48 @@
-import flowerBud from '../assets/images/flower-thca-bud.jpg'
-import vapePens from '../assets/images/vape-geekbar-pulse.jpg'
-import kratomBox from '../assets/images/kratom-opms-black-shots.jpg'
-import refillPods from '../assets/images/refill-pods-lostmary.jpg'
-import ashCatcher from '../assets/images/ash-catcher-raw.jpg'
-import shisha from '../assets/images/shisha-hookah.jpg'
-import disposableHookah from '../assets/images/disposable-hookah.jpg'
-import coilsPods from '../assets/images/coils-pods-mod.jpeg'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getProducts } from '../api/products'
 
-const ITEMS = [
-  { name: 'Flower', desc: 'THCA flower & pre-rolls', image: flowerBud },
-  { name: 'Vapes', desc: 'Disposables, kits, pod systems', image: vapePens },
-  { name: 'Kratom', desc: 'Maeng Da, Red, Green, White', image: kratomBox },
-  { name: 'Refill Pods', desc: 'Lost Mary, Foger, Fogger', image: refillPods },
-  { name: 'Ash Catcher', desc: 'Glass ash catchers', image: ashCatcher },
-  { name: 'Shisha', desc: 'Premium hookah tobacco', image: shisha },
-  { name: 'Disposable Hookah', desc: 'E-hookah, up to 60K puffs', image: disposableHookah },
-  { name: 'Coils / Pods', desc: 'Replacements & spares', image: coilsPods },
+const CATEGORY_ORDER = [
+  'Flower',
+  'Vapes',
+  'Kratom',
+  'Refill Pods',
+  'Ash Catcher',
+  'Shisha',
+  'Disposable Hookah',
+  'Coils / Pods',
 ]
 
 export default function Collections() {
-  const navigator = useNavigate();
+  const navigate = useNavigate()
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    Promise.all(
+      CATEGORY_ORDER.map((cat) =>
+        getProducts({ category: cat, limit: 1 })
+          .then((data) => ({ cat, product: data.products?.[0] }))
+          .catch(() => ({ cat, product: null }))
+      )
+    ).then((results) => {
+      if (cancelled) return
+      const list = results
+        .filter((r) => r.product)
+        .map(({ cat, product }) => ({
+          category: cat,
+          desc: product.description,
+          image: product.image?.[0]?.url,
+        }))
+      setItems(list)
+      setLoading(false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   return (
     <section id="collections" className="mx-auto max-w-[1280px] px-5 py-16 lg:px-10">
       <div className="mb-6 flex items-end justify-between border-b border-black/10 pb-4">
@@ -33,26 +55,37 @@ export default function Collections() {
         </a>
       </div>
 
-      <div className="grid grid-cols-2 divide-x divide-y divide-black/10 border border-black/10 sm:grid-cols-4">
-        {ITEMS.map((item) => (
-          <a key={item.name} href="/shop" className="group block p-5">
-            <img
-              src={item.image}
-              alt={item.name}
-              className="aspect-[4/3] w-full rounded-sm object-cover"
-            />
-            <div className="pt-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[15px] font-bold text-[#1a1a17]">{item.name}</p>
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-[#3c6e35] transition group-hover:underline" onClick={() => navigator('/shop')}>
-                  Shop
-                </span>
+      {loading ? (
+        <p className="py-10 text-center text-sm text-[#7a7a72]">Loading collections&hellip;</p>
+      ) : (
+        <div className="grid grid-cols-2 divide-x divide-y divide-black/10 border border-black/10 sm:grid-cols-4">
+          {items.map((item) => (
+            <a
+              key={item.category}
+              href={`/shop?category=${encodeURIComponent(item.category)}`}
+              className="group block p-5"
+            >
+              <img
+                src={item.image}
+                alt={item.category}
+                className="aspect-[4/3] w-full rounded-sm object-cover"
+              />
+              <div className="pt-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[15px] font-bold text-[#1a1a17]">{item.category}</p>
+                  <span
+                    className="text-[11px] font-semibold uppercase tracking-wide text-[#3c6e35] transition group-hover:underline"
+                    onClick={() => navigate(`/shop?category=${encodeURIComponent(item.category)}`)}
+                  >
+                    Shop
+                  </span>
+                </div>
+                <p className="mt-1 text-[12px] text-[#8a897f]">{item.desc}</p>
               </div>
-              <p className="mt-1 text-[12px] text-[#8a897f]">{item.desc}</p>
-            </div>
-          </a>
-        ))}
-      </div>
+            </a>
+          ))}
+        </div>
+      )}
     </section>
   )
 }
