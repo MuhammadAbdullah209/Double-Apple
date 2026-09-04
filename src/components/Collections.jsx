@@ -1,16 +1,22 @@
-import kratomBox from '../assets/images/kratom-box.jpg'
-import vapePens from '../assets/images/vape-pens.jpg'
+import flowerBud from '../assets/images/flower-thca-bud.jpg'
+import vapePens from '../assets/images/vape-geekbar-pulse.jpg'
+import kratomBox from '../assets/images/kratom-opms-black-shots.jpg'
+import refillPods from '../assets/images/refill-pods-lostmary.jpg'
+import ashCatcher from '../assets/images/ash-catcher-raw.jpg'
+import shisha from '../assets/images/shisha-hookah.jpg'
+import disposableHookah from '../assets/images/disposable-hookah.jpg'
+import coilsPods from '../assets/images/coils-pods-mod.jpeg'
 import { useNavigate } from 'react-router-dom'
 
 const ITEMS = [
-  { name: 'Flower', desc: 'THCA flower & pre-rolls', image: vapePens },
+  { name: 'Flower', desc: 'THCA flower & pre-rolls', image: flowerBud },
   { name: 'Vapes', desc: 'Disposables, kits, pod systems', image: vapePens },
   { name: 'Kratom', desc: 'Maeng Da, Red, Green, White', image: kratomBox },
-  { name: 'Refill Pods', desc: 'Lost Mary, Foger, Fogger', image: kratomBox },
-  { name: 'Ash Catcher', desc: 'Glass ash catchers', image: vapePens },
-  { name: 'Shisha', desc: 'Premium hookah tobacco', image: kratomBox },
-  { name: 'Disposable Hookah', desc: 'E-hookah, up to 60K puffs', image: vapePens },
-  { name: 'Coils / Pods', desc: 'Replacements & spares', image: kratomBox },
+  { name: 'Refill Pods', desc: 'Lost Mary, Foger, Fogger', image: refillPods },
+  { name: 'Ash Catcher', desc: 'Glass ash catchers', image: ashCatcher },
+  { name: 'Shisha', desc: 'Premium hookah tobacco', image: shisha },
+  { name: 'Disposable Hookah', desc: 'E-hookah, up to 60K puffs', image: disposableHookah },
+  { name: 'Coils / Pods', desc: 'Replacements & spares', image: coilsPods },
 ]
 
 export default function Collections() {

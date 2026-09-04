@@ -1,8 +1,10 @@
 import kratomBox from '../assets/images/kratom-box.jpg'
 import vapePens from '../assets/images/vape-pens.jpg'
+import opmsBlackShots from '../assets/images/kratom-opms-black-shots.jpg'
+import lostMaryNeraPod from '../assets/images/refill-pods-lostmary.jpg'
 
 export const KRATOM_PRODUCTS = [
-  { name: 'OPMS Black Shots', price: '14.99', image: kratomBox, category: 'Kratom' },
+  { name: 'OPMS Black Shots', price: '14.99', image: opmsBlackShots, category: 'Kratom' },
   { name: 'OPMS Shots Red 50/Pk', price: '14.99', image: kratomBox, category: 'Kratom' },
   { name: 'OPMS Liquid Kratom Gold', price: '14.99', image: kratomBox, category: 'Kratom' },
   {
@@ -30,19 +32,19 @@ export const REFILL_POD_PRODUCTS = [
   {
     name: 'Lost Mary Nera Pod 70K 2ct/Pk | Sour Apple Ice',
     price: '19.99',
-    image: vapePens,
+    image: lostMaryNeraPod,
     category: 'Refill Pods',
   },
   {
     name: 'Lost Mary Nera Pod 70K 2ct/Pk | Pink Lemonade',
     price: '19.99',
-    image: vapePens,
+    image: lostMaryNeraPod,
     category: 'Refill Pods',
   },
   {
     name: 'Lost Mary Nera Pod 70K 2ct/Pk | Watermelon Ice',
     price: '19.99',
-    image: vapePens,
+    image: lostMaryNeraPod,
     category: 'Refill Pods',
     soldOut: true,
   },
