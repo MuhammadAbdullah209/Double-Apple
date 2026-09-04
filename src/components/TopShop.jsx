@@ -27,6 +27,7 @@ function CheckIcon() {
 }
 
 export default function TopShop() {
+  
   return (
     <section className="mx-auto max-w-[1280px] px-5 py-16 lg:px-10">
       <div className="mx-auto mb-10 max-w-2xl text-center">

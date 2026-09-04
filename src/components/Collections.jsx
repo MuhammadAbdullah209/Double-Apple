@@ -1,5 +1,6 @@
 import kratomBox from '../assets/images/kratom-box.jpg'
 import vapePens from '../assets/images/vape-pens.jpg'
+import { useNavigate } from 'react-router-dom'
 
 const ITEMS = [
   { name: 'Flower', desc: 'THCA flower & pre-rolls', image: vapePens },
@@ -13,12 +14,13 @@ const ITEMS = [
 ]
 
 export default function Collections() {
+  const navigator = useNavigate();
   return (
     <section id="collections" className="mx-auto max-w-[1280px] px-5 py-16 lg:px-10">
       <div className="mb-6 flex items-end justify-between border-b border-black/10 pb-4">
         <h2 className="text-2xl font-bold text-[#1a1a17] sm:text-3xl">Premium collections</h2>
         <a
-          href="#"
+          href="/shop"
           className="text-xs font-semibold uppercase tracking-wide text-[#3c6e35] hover:underline"
         >
           View all categories
@@ -27,7 +29,7 @@ export default function Collections() {
 
       <div className="grid grid-cols-2 divide-x divide-y divide-black/10 border border-black/10 sm:grid-cols-4">
         {ITEMS.map((item) => (
-          <a key={item.name} href="#" className="group block p-5">
+          <a key={item.name} href="/shop" className="group block p-5">
             <img
               src={item.image}
               alt={item.name}
@@ -36,7 +38,7 @@ export default function Collections() {
             <div className="pt-3">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-[15px] font-bold text-[#1a1a17]">{item.name}</p>
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-[#3c6e35] transition group-hover:underline">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-[#3c6e35] transition group-hover:underline" onClick={() => navigator('/shop')}>
                   Shop
                 </span>
               </div>
