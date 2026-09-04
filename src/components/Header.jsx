@@ -212,6 +212,74 @@ export default function Header() {
         "
       >
 
+        {/* =================================
+            MOBILE MENU BUTTON
+        ================================= */}
+
+        <button
+          type="button"
+          aria-label="Menu"
+          onClick={() => setMenuOpen((v) => !v)}
+          className="
+            mr-3
+            flex
+            flex-col
+            gap-[4px]
+            border-0
+            bg-transparent
+            p-1
+            lg:hidden
+          "
+        >
+
+          <span
+            className={`
+              block
+              h-[2px]
+              w-5
+              bg-white
+              transition-transform
+              ${
+                menuOpen
+                  ? "translate-y-[6px] rotate-45"
+                  : ""
+              }
+            `}
+          />
+
+          <span
+            className={`
+              block
+              h-[2px]
+              w-5
+              bg-white
+              transition-opacity
+              ${
+                menuOpen
+                  ? "opacity-0"
+                  : "opacity-100"
+              }
+            `}
+          />
+
+          <span
+            className={`
+              block
+              h-[2px]
+              w-5
+              bg-white
+              transition-transform
+              ${
+                menuOpen
+                  ? "-translate-y-[6px] -rotate-45"
+                  : ""
+              }
+            `}
+          />
+
+        </button>
+
+
         {/* LOGO */}
 
         <Logo />
@@ -503,74 +571,6 @@ export default function Header() {
           </button>
 
         </div>
-
-
-        {/* =================================
-            MOBILE MENU
-        ================================= */}
-
-        <button
-          type="button"
-          aria-label="Menu"
-          onClick={() => setMenuOpen((v) => !v)}
-          className="
-            ml-auto
-            flex
-            flex-col
-            gap-[4px]
-            border-0
-            bg-transparent
-            p-1
-            lg:hidden
-          "
-        >
-
-          <span
-            className={`
-              block
-              h-[2px]
-              w-5
-              bg-white
-              transition-transform
-              ${
-                menuOpen
-                  ? "translate-y-[6px] rotate-45"
-                  : ""
-              }
-            `}
-          />
-
-          <span
-            className={`
-              block
-              h-[2px]
-              w-5
-              bg-white
-              transition-opacity
-              ${
-                menuOpen
-                  ? "opacity-0"
-                  : "opacity-100"
-              }
-            `}
-          />
-
-          <span
-            className={`
-              block
-              h-[2px]
-              w-5
-              bg-white
-              transition-transform
-              ${
-                menuOpen
-                  ? "-translate-y-[6px] -rotate-45"
-                  : ""
-              }
-            `}
-          />
-
-        </button>
 
       </div>
 
