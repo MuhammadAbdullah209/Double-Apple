@@ -116,7 +116,7 @@ export default function ProductDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { addItem } = useCart()
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, user, loading: authLoading } = useAuth()
   const { isWishlisted, toggleWishlist } = useWishlist()
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -159,8 +159,10 @@ export default function ProductDetail() {
   }
 
   useEffect(() => {
+    // Re-fetches once auth restoration finishes (e.g. after a hard reload), so a
+    // just-signed-in user's own pending review shows up without needing a manual refresh.
     loadReviews(id)
-  }, [id])
+  }, [id, authLoading])
 
   const openReviewForm = () => {
     if (!isAuthenticated) {
@@ -409,42 +411,62 @@ export default function ProductDetail() {
                       </p>
                     ) : (
                       <div className="flex flex-col gap-6">
-                        {sortedReviews.map((r) => (
-                          <div key={r._id} className="border-b border-black/10 pb-6">
-                            <div className="flex items-center gap-3">
-                              <span className="grid h-9 w-9 place-items-center rounded-full bg-[#3c6e35] text-xs font-bold text-white">
-                                {(r.user?.firstname || 'A')[0]}
-                              </span>
-                              <div>
-                                <p className="text-sm font-bold text-[#1a1a17]">
-                                  {reviewerName(r.user)}
-                                </p>
-                                <p className="text-xs text-[#9a988e]">
-                                  {new Date(r.createdAt).toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric',
-                                    year: 'numeric',
-                                  })}
-                                </p>
+                        {sortedReviews.map((r) => {
+                          const isPending = r.status === 'pending'
+                          const isRejected = r.status === 'rejected'
+                          return (
+                            <div key={r._id} className="relative border-b border-black/10 pb-6">
+                              <div className={isPending ? 'pointer-events-none select-none blur-[3px]' : ''}>
+                                <div className="flex items-center gap-3">
+                                  <span className="grid h-9 w-9 place-items-center rounded-full bg-[#3c6e35] text-xs font-bold text-white">
+                                    {(r.user?.firstname || 'A')[0]}
+                                  </span>
+                                  <div>
+                                    <p className="text-sm font-bold text-[#1a1a17]">
+                                      {reviewerName(r.user)}
+                                    </p>
+                                    <p className="text-xs text-[#9a988e]">
+                                      {new Date(r.createdAt).toLocaleDateString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric',
+                                      })}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="mt-2 flex gap-0.5">
+                                  {Array.from({ length: 5 }).map((_, i) => (
+                                    <StarIcon
+                                      key={i}
+                                      className={`h-3.5 w-3.5 ${
+                                        i < r.rating ? 'text-[#3CA43C]' : 'text-black/10'
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                                {r.comment && (
+                                  <p className="mt-2 text-sm leading-relaxed text-[#4a4a43]">
+                                    {r.comment}
+                                  </p>
+                                )}
                               </div>
+
+                              {isPending && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <span className="rounded-full bg-[#1a1a17]/85 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-white shadow-sm">
+                                    Waiting for admin approval
+                                  </span>
+                                </div>
+                              )}
+
+                              {isRejected && (
+                                <p className="mt-2 text-xs font-bold uppercase tracking-wide text-red-500">
+                                  Not approved by admin
+                                </p>
+                              )}
                             </div>
-                            <div className="mt-2 flex gap-0.5">
-                              {Array.from({ length: 5 }).map((_, i) => (
-                                <StarIcon
-                                  key={i}
-                                  className={`h-3.5 w-3.5 ${
-                                    i < r.rating ? 'text-[#3CA43C]' : 'text-black/10'
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                            {r.comment && (
-                              <p className="mt-2 text-sm leading-relaxed text-[#4a4a43]">
-                                {r.comment}
-                              </p>
-                            )}
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     )}
                   </div>

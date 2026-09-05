@@ -128,7 +128,9 @@ export default function Testimonials() {
 
       <div className="mt-9 text-center">
         <a
-          href="#"
+          href="https://www.google.com/maps/place/Double+Apple+Smoke+Shop/@30.381803,-97.687215,16z/data=!4m17!1m8!3m7!1s0x8644c9455306efc5:0x2c0487f00bfd7a8c!2s11220+N+Lamar+Blvd+B202,+Austin,+TX+78753!3b1!8m2!3d30.3818034!4d-97.6872147!16s%2Fg%2F11yrbtb54v!3m7!1s0x8644c968684aae17:0xf65561555550d317!8m2!3d30.3821154!4d-97.6878033!9m1!1b1!16s%2Fg%2F11f5k2dv3l?hl=en-US&entry=ttu&g_ep=EgoyMDI2MDkwMS4wIKXMDSoASAFQAw%3D%3D"
+          target="_blank"
+          rel="noopener noreferrer"
           className="inline-flex items-center gap-2  bg-[#3da130] px-7 py-3 text-sm font-semibold text-black transition hover:bg-[#345f2e]"
         >
           Leave a Review

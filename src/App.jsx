@@ -13,6 +13,7 @@ import ContactUs from './pages/ContactUs'
 import Blog from './pages/Blog'
 import BlogDetail from './pages/BlogDetail'
 import Profile from './pages/Profile'
+import Wishlist from './pages/Wishlist'
 import FAQPage from './pages/FAQPage'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import ReturnPolicy from './pages/ReturnPolicy'
@@ -44,6 +45,7 @@ function App() {
           <Route path="/terms-of-service" element={<TermsOfService />} />
           <Route path="/refund-policy" element={<RefundPolicy />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/wishlist" element={<Wishlist />} />
         </Route>
       </Routes>
     </>

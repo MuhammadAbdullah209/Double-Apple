@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { useWishlist } from "../context/WishlistContext";
 import logo from "../assets/images/doubleapple.png";
 import ShopMegaMenu from "./ShopMegaMenu";
 
@@ -18,9 +19,7 @@ function isNavActive(pathname, href) {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-/* ================================
-   SEARCH ICON
-================================ */
+
 
 function SearchIcon() {
   return (
@@ -47,9 +46,7 @@ function SearchIcon() {
   );
 }
 
-/* ================================
-   USER ICON
-================================ */
+
 
 function UserIcon() {
   return (
@@ -76,9 +73,26 @@ function UserIcon() {
   );
 }
 
-/* ================================
-   CART ICON
-================================ */
+
+
+function HeartIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className="h-[17px] w-[17px]"
+    >
+      <path
+        d="M12 20.5s-7.5-4.6-9.8-9.2C.6 7.7 2.6 4.5 6 4.5c2 0 3.6 1.1 4.5 2.6.9-1.5 2.5-2.6 4.5-2.6 3.4 0 5.4 3.2 3.8 6.8-2.3 4.6-9.8 9.2-9.8 9.2z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+
 
 function CartIcon() {
   return (
@@ -112,9 +126,7 @@ function CartIcon() {
   );
 }
 
-/* ================================
-   CHEVRON
-================================ */
+
 
 function ChevronDownIcon({ className = "h-[8px] w-[8px]" }) {
   return (
@@ -134,9 +146,7 @@ function ChevronDownIcon({ className = "h-[8px] w-[8px]" }) {
   );
 }
 
-/* ================================
-   LOGO
-================================ */
+
 
 function Logo() {
   return (
@@ -163,9 +173,6 @@ function Logo() {
   );
 }
 
-/* ================================
-   HEADER
-================================ */
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -174,6 +181,7 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState("");
   const { count: cartCount, openCart } = useCart();
   const { isAuthenticated, user, logout } = useAuth();
+  const { items: wishlistItems } = useWishlist();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -194,15 +202,13 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 w-full bg-[#050509]">
 
-      {/* =================================
-          MAIN HEADER
-      ================================= */}
+
 
       <div
         className="
           mx-auto
           flex
-          h-[64px]
+          h-[70px]
           w-full
           max-w-[1200px]
           items-center
@@ -293,7 +299,7 @@ export default function Header() {
           className="
             hidden
             h-full
-            flex-1
+            flex-2
             items-center
             justify-center
             gap-10
@@ -346,7 +352,7 @@ export default function Header() {
                   flex
                   h-full
                   items-center
-                  gap-[4px]
+                  gap-[8px]
                   whitespace-nowrap
                   font-sans
                   text-[14px]
@@ -364,9 +370,6 @@ export default function Header() {
         </nav>
 
 
-        {/* =================================
-            RIGHT SIDE
-        ================================= */}
 
         <div
           className="
@@ -439,7 +442,7 @@ export default function Header() {
           </form>
 
 
-          {/* USER */}
+
 
           {isAuthenticated ? (
             <div
@@ -523,6 +526,50 @@ export default function Header() {
               <UserIcon />
             </Link>
           )}
+
+
+
+          <Link
+            to="/wishlist"
+            aria-label="Wishlist"
+            className="
+              relative
+              flex
+              h-[30px]
+              w-[26px]
+              shrink-0
+              items-center
+              justify-center
+              border-0
+              bg-transparent
+              p-0
+              text-white/80
+            "
+          >
+            <HeartIcon />
+            {wishlistItems.length > 0 && (
+              <span
+                className="
+                  absolute
+                  -right-[3px]
+                  -top-[3px]
+                  grid
+                  h-[15px]
+                  min-w-[15px]
+                  place-items-center
+                  rounded-full
+                  bg-[#3CA43C]
+                  px-[3px]
+                  text-[9px]
+                  font-bold
+                  leading-none
+                  text-white
+                "
+              >
+                {wishlistItems.length}
+              </span>
+            )}
+          </Link>
 
 
           {/* CART */}
@@ -614,6 +661,14 @@ export default function Header() {
               {item.label}
             </Link>
           ))}
+
+          <Link
+            to="/wishlist"
+            onClick={() => setMenuOpen(false)}
+            className="block py-2 font-sans text-sm font-medium text-white/80 no-underline"
+          >
+            Wishlist{wishlistItems.length > 0 ? ` (${wishlistItems.length})` : ""}
+          </Link>
 
           {isAuthenticated ? (
             <>
