@@ -292,6 +292,127 @@ export default function Header() {
 
 
         {/* =================================
+            MOBILE ICONS (account / wishlist / cart)
+        ================================= */}
+
+        <div
+          className="
+            ml-auto
+            flex
+            items-center
+            gap-2
+            lg:hidden
+          "
+        >
+
+          <Link
+            to={isAuthenticated ? "/profile" : "/sign-in"}
+            aria-label="Account"
+            className={`
+              flex
+              h-[30px]
+              w-[26px]
+              shrink-0
+              items-center
+              justify-center
+              border-0
+              bg-transparent
+              p-0
+              ${isAuthenticated ? "text-[#54bd3b]" : "text-white/80"}
+            `}
+          >
+            <UserIcon />
+          </Link>
+
+          <Link
+            to="/wishlist"
+            aria-label="Wishlist"
+            className="
+              relative
+              flex
+              h-[30px]
+              w-[26px]
+              shrink-0
+              items-center
+              justify-center
+              border-0
+              bg-transparent
+              p-0
+              text-white/80
+            "
+          >
+            <HeartIcon />
+            {wishlistItems.length > 0 && (
+              <span
+                className="
+                  absolute
+                  -right-[3px]
+                  -top-[3px]
+                  grid
+                  h-[15px]
+                  min-w-[15px]
+                  place-items-center
+                  rounded-full
+                  bg-[#3CA43C]
+                  px-[3px]
+                  text-[9px]
+                  font-bold
+                  leading-none
+                  text-white
+                "
+              >
+                {wishlistItems.length}
+              </span>
+            )}
+          </Link>
+
+          <button
+            type="button"
+            onClick={openCart}
+            aria-label="Cart"
+            className="
+              relative
+              flex
+              h-[30px]
+              w-[26px]
+              shrink-0
+              items-center
+              justify-center
+              border-0
+              bg-transparent
+              p-0
+              text-white/80
+            "
+          >
+            <CartIcon />
+            {cartCount > 0 && (
+              <span
+                className="
+                  absolute
+                  -right-[3px]
+                  -top-[3px]
+                  grid
+                  h-[15px]
+                  min-w-[15px]
+                  place-items-center
+                  rounded-full
+                  bg-[#3CA43C]
+                  px-[3px]
+                  text-[9px]
+                  font-bold
+                  leading-none
+                  text-white
+                "
+              >
+                {cartCount}
+              </span>
+            )}
+          </button>
+
+        </div>
+
+
+        {/* =================================
             DESKTOP NAVIGATION
         ================================= */}
 
@@ -662,42 +783,17 @@ export default function Header() {
             </Link>
           ))}
 
-          <Link
-            to="/wishlist"
-            onClick={() => setMenuOpen(false)}
-            className="block py-2 font-sans text-sm font-medium text-white/80 no-underline"
-          >
-            Wishlist{wishlistItems.length > 0 ? ` (${wishlistItems.length})` : ""}
-          </Link>
-
-          {isAuthenticated ? (
-            <>
-              <Link
-                to="/profile"
-                onClick={() => setMenuOpen(false)}
-                className="block py-2 font-sans text-sm font-medium text-white/80 no-underline"
-              >
-                Profile
-              </Link>
-              <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  handleLogout();
-                }}
-                className="block w-full border-0 bg-transparent py-2 text-left font-sans text-sm font-medium text-white/80"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <Link
-              to="/sign-in"
-              onClick={() => setMenuOpen(false)}
-              className="block py-2 font-sans text-sm font-medium text-white/80 no-underline"
+          {isAuthenticated && (
+            <button
+              type="button"
+              onClick={() => {
+                setMenuOpen(false);
+                handleLogout();
+              }}
+              className="block w-full border-0 bg-transparent py-2 text-left font-sans text-sm font-medium text-white/80"
             >
-              Sign In
-            </Link>
+              Logout
+            </button>
           )}
 
           <form
