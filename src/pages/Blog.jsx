@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import VisitUs from '../components/VisitUs'
-import { ArrowRightIcon } from '../components/Icons'
-import { BLOG_POSTS, slugify } from '../data/blogPosts'
+import { ArrowRightIcon, UserIcon } from '../components/Icons'
+import { getBlogs } from '../api/blog'
+import { authorName, formatBlogDate } from '../utils/blog'
 
 function CalendarIcon({ className = 'h-3.5 w-3.5' }) {
   return (
@@ -13,24 +14,24 @@ function CalendarIcon({ className = 'h-3.5 w-3.5' }) {
   )
 }
 
-function CommentIcon({ className = 'h-3.5 w-3.5' }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className={className}>
-      <path
-        d="M4 5h16v11H8l-4 4V5z"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-const POSTS_PER_PAGE = 2
+const POSTS_PER_PAGE = 6
 
 export default function Blog() {
   const [searchParams] = useSearchParams()
   const searchQuery = searchParams.get('search') || ''
   const [page, setPage] = useState(1)
+  const [posts, setPosts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    setLoading(true)
+    setError(false)
+    getBlogs({ limit: 100 })
+      .then((data) => setPosts(data.blogs || []))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false))
+  }, [])
 
   useEffect(() => {
     setPage(1)
@@ -38,13 +39,13 @@ export default function Blog() {
 
   const q = searchQuery.trim().toLowerCase()
   const filteredPosts = q
-    ? BLOG_POSTS.filter(
+    ? posts.filter(
         (post) =>
           post.title.toLowerCase().includes(q) ||
-          post.excerpt.toLowerCase().includes(q) ||
-          post.tag.toLowerCase().includes(q)
+          (post.excerpt || '').toLowerCase().includes(q) ||
+          (post.category || '').toLowerCase().includes(q)
       )
-    : BLOG_POSTS
+    : posts
 
   const totalPages = Math.max(1, Math.ceil(filteredPosts.length / POSTS_PER_PAGE))
   const visiblePosts = filteredPosts.slice((page - 1) * POSTS_PER_PAGE, page * POSTS_PER_PAGE)
@@ -76,34 +77,42 @@ export default function Blog() {
           </p>
         )}
 
-        {filteredPosts.length === 0 ? (
+        {loading ? (
+          <p className="py-16 text-center text-sm text-[#7a7a72]">Loading posts&hellip;</p>
+        ) : error ? (
           <p className="py-16 text-center text-sm text-[#7a7a72]">
-            No blog posts match your search. Try a different keyword.
+            Couldn&rsquo;t load blog posts right now. Please try again shortly.
+          </p>
+        ) : filteredPosts.length === 0 ? (
+          <p className="py-16 text-center text-sm text-[#7a7a72]">
+            {searchQuery
+              ? 'No blog posts match your search. Try a different keyword.'
+              : 'No blog posts yet — check back soon.'}
           </p>
         ) : (
         <div className="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
           {visiblePosts.map((post) => (
-            <article key={post.title} className="flex flex-col">
-              <img
-                src={post.image}
-                alt={post.title}
-                className="aspect-[4/3] w-full object-cover"
-              />
+            <article key={post._id} className="flex flex-col">
+              {post.image?.url ? (
+                <img
+                  src={post.image.url}
+                  alt={post.title}
+                  className="aspect-[4/3] w-full object-cover"
+                />
+              ) : (
+                <div className="aspect-[4/3] w-full bg-[#eef4e9]" />
+              )}
               <p className="mt-4 text-[11px] font-bold uppercase tracking-wide text-[#3c6e35]">
-                {post.tag}
+                {post.category}
               </p>
               <div className="mt-1.5 flex items-center gap-3 text-xs text-[#9a988e]">
                 <span className="flex items-center gap-1.5">
                   <CalendarIcon />
-                  {new Date(post.date).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: '2-digit',
-                    year: 'numeric',
-                  })}
+                  {formatBlogDate(post.createdAt)}
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <CommentIcon />
-                  {post.comments} Comment{post.comments === 1 ? '' : 's'}
+                  <UserIcon className="h-3.5 w-3.5" />
+                  {authorName(post.author)}
                 </span>
               </div>
               <h2 className="mt-2.5 text-base font-extrabold leading-snug text-[#1a1a17]">
@@ -111,7 +120,7 @@ export default function Blog() {
               </h2>
               <p className="mt-2.5 text-sm leading-relaxed text-[#6b6b6b]">{post.excerpt}</p>
               <Link
-                to={`/blog/${slugify(post.title)}`}
+                to={`/blog/${post._id}`}
                 className="mt-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[#3c6e35] hover:underline"
               >
                 Read More
