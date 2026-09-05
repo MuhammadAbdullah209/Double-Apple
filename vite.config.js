@@ -29,6 +29,7 @@ export default defineConfig(({ mode }) => {
         '/Wishlist': proxyTarget,
         '/Review': proxyTarget,
         '/Blog': proxyTarget,
+        '/Newsletter': proxyTarget,
       },
     },
   }

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { StarIcon, CartIcon, ChevronDownIcon } from '../components/Icons'
 import ProductCard from '../components/ProductCard'
+import ShareModal from '../components/ShareModal'
 import VisitUs from '../components/VisitUs'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
@@ -126,6 +127,7 @@ export default function ProductDetail() {
   const [activeTab, setActiveTab] = useState('Reviews')
   const [openFaq, setOpenFaq] = useState(2)
   const [added, setAdded] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
 
   const [reviews, setReviews] = useState([])
   const [reviewSummary, setReviewSummary] = useState({ average: 0, total: 0, breakdown: {} })
@@ -650,7 +652,11 @@ export default function ProductDetail() {
                 {isWishlisted(product._id) ? 'Wishlisted' : 'Wishlist'}
               </button>
               <span className="h-4 w-px bg-black/10" />
-              <button type="button" className="flex items-center gap-1.5 hover:text-[#3c6e35]">
+              <button
+                type="button"
+                onClick={() => setShareOpen(true)}
+                className="flex items-center gap-1.5 hover:text-[#3c6e35]"
+              >
                 <ShareIcon /> Share
               </button>
             </div>
@@ -673,6 +679,13 @@ export default function ProductDetail() {
       </section>
 
       <VisitUs />
+
+      <ShareModal
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        url={typeof window !== 'undefined' ? window.location.href : ''}
+        title={product?.name}
+      />
     </>
   )
 }

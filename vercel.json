@@ -14,6 +14,8 @@
     { "source": "/Review/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Review/:path*" },
     { "source": "/Blog/", "destination": "https://triple-buzz-store-backend-one.vercel.app/Blog" },
     { "source": "/Blog/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Blog/:path*" },
+    { "source": "/Newsletter/", "destination": "https://triple-buzz-store-backend-one.vercel.app/Newsletter" },
+    { "source": "/Newsletter/:path*", "destination": "https://triple-buzz-store-backend-one.vercel.app/Newsletter/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
