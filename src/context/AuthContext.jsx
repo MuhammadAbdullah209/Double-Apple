@@ -75,6 +75,18 @@ export function AuthProvider({ children }) {
     return data
   }
 
+  const uploadAvatar = async (file) => {
+    const data = await authApi.uploadAvatar(file)
+    setUser((prev) => (prev ? { ...prev, avatar: data.avatar } : prev))
+    return data
+  }
+
+  const removeAvatar = async () => {
+    const data = await authApi.removeAvatar()
+    setUser((prev) => (prev ? { ...prev, avatar: null } : prev))
+    return data
+  }
+
   const value = {
     user,
     token,
@@ -87,6 +99,8 @@ export function AuthProvider({ children }) {
     reverify,
     logout,
     updateProfile,
+    uploadAvatar,
+    removeAvatar,
     fetchProfile,
   }
 

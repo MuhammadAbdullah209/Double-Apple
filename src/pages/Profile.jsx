@@ -558,13 +558,16 @@ function PasswordPanel({ updateProfile }) {
    MY ACCOUNT TAB
 ================================ */
 
-function AccountPanel({ user, updateProfile }) {
+function AccountPanel({ user, updateProfile, uploadAvatar, removeAvatar }) {
   const [editing, setEditing] = useState(false)
-  const [photo, setPhoto] = useState(null)
+  const [previewUrl, setPreviewUrl] = useState(null)
+  const [avatarBusy, setAvatarBusy] = useState(false)
+  const [avatarError, setAvatarError] = useState('')
   const [saveError, setSaveError] = useState('')
   const [saveSuccess, setSaveSuccess] = useState('')
   const fileInputRef = useRef(null)
   const extraKey = `double-apple-profile-extra:${user.email}`
+  const photo = previewUrl || user.avatar?.url || null
 
   const {
     register,
@@ -640,21 +643,36 @@ function AccountPanel({ user, updateProfile }) {
     }
   }
 
-  const handlePhotoChange = (e) => {
+  const handlePhotoChange = async (e) => {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file || !file.type.startsWith('image/')) return
-    setPhoto((prev) => {
-      if (prev) URL.revokeObjectURL(prev)
-      return URL.createObjectURL(file)
-    })
+
+    setAvatarError('')
+    const localPreview = URL.createObjectURL(file)
+    setPreviewUrl(localPreview)
+    setAvatarBusy(true)
+    try {
+      await uploadAvatar(file)
+    } catch (err) {
+      setAvatarError(err.response?.data?.message || 'Could not upload your photo. Please try again.')
+    } finally {
+      setAvatarBusy(false)
+      URL.revokeObjectURL(localPreview)
+      setPreviewUrl(null)
+    }
   }
 
-  const removePhoto = () => {
-    setPhoto((prev) => {
-      if (prev) URL.revokeObjectURL(prev)
-      return null
-    })
+  const removePhoto = async () => {
+    setAvatarError('')
+    setAvatarBusy(true)
+    try {
+      await removeAvatar()
+    } catch (err) {
+      setAvatarError(err.response?.data?.message || 'Could not remove your photo. Please try again.')
+    } finally {
+      setAvatarBusy(false)
+    }
   }
 
   const initial = (user.firstname || 'U').charAt(0).toUpperCase()
@@ -690,41 +708,54 @@ function AccountPanel({ user, updateProfile }) {
             </p>
           )}
 
-          <div className="relative w-fit">
-            {photo ? (
-              <img
-                src={photo}
-                alt="Profile"
-                className="h-24 w-24 rounded-full border-4 border-white object-cover shadow-sm ring-1 ring-black/5"
-              />
-            ) : (
-              <span className="grid h-24 w-24 place-items-center rounded-full border-4 border-white bg-[#3c6e35] text-2xl font-bold text-white shadow-sm ring-1 ring-black/5">
-                {initial}
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              aria-label="Upload profile photo"
-              className="absolute -bottom-1 -right-1 grid h-8 w-8 place-items-center rounded-full border-2 border-white bg-[#3CA43C] text-white shadow-sm transition hover:bg-[#2f8a30]"
-            >
-              <CameraIcon />
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoChange}
-              className="hidden"
-            />
-            {photo && (
+          <div>
+            <div className="relative w-fit">
+              {photo ? (
+                <img
+                  src={photo}
+                  alt="Profile"
+                  className={`h-24 w-24 rounded-full border-4 border-white object-cover shadow-sm ring-1 ring-black/5 ${
+                    avatarBusy ? 'opacity-50' : ''
+                  }`}
+                />
+              ) : (
+                <span
+                  className={`grid h-24 w-24 place-items-center rounded-full border-4 border-white bg-[#3c6e35] text-2xl font-bold text-white shadow-sm ring-1 ring-black/5 ${
+                    avatarBusy ? 'opacity-50' : ''
+                  }`}
+                >
+                  {initial}
+                </span>
+              )}
               <button
                 type="button"
-                onClick={removePhoto}
-                className="absolute left-0 top-full mt-1 whitespace-nowrap text-xs font-semibold text-red-500 hover:underline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={avatarBusy}
+                aria-label="Upload profile photo"
+                className="absolute -bottom-1 -right-1 grid h-8 w-8 place-items-center rounded-full border-2 border-white bg-[#3CA43C] text-white shadow-sm transition hover:bg-[#2f8a30] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Remove photo
+                <CameraIcon />
               </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                className="hidden"
+              />
+              {user.avatar?.url && !previewUrl && (
+                <button
+                  type="button"
+                  onClick={removePhoto}
+                  disabled={avatarBusy}
+                  className="absolute left-0 top-full mt-1 whitespace-nowrap text-xs font-semibold text-red-500 hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Remove photo
+                </button>
+              )}
+            </div>
+            {avatarError && (
+              <p className="mt-2 max-w-xs text-xs font-medium text-red-600">{avatarError}</p>
             )}
           </div>
 
@@ -844,7 +875,7 @@ function AccountPanel({ user, updateProfile }) {
 ================================ */
 
 export default function Profile() {
-  const { user, updateProfile, loading: authLoading } = useAuth()
+  const { user, updateProfile, uploadAvatar, removeAvatar, loading: authLoading } = useAuth()
   const [activeTab, setActiveTab] = useState('account')
 
   if (authLoading) {
@@ -874,9 +905,17 @@ export default function Profile() {
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <div className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm">
             <div className="flex items-center gap-3 border-b border-black/10 p-5">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#3c6e35] text-sm font-bold text-white">
-                {initial}
-              </span>
+              {user.avatar?.url ? (
+                <img
+                  src={user.avatar.url}
+                  alt=""
+                  className="h-11 w-11 shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#3c6e35] text-sm font-bold text-white">
+                  {initial}
+                </span>
+              )}
               <div className="min-w-0">
                 <p className="text-xs text-[#9a988e]">Hello</p>
                 <p className="truncate text-sm font-extrabold text-[#1a1a17]">{fullName}</p>
@@ -913,7 +952,14 @@ export default function Profile() {
         </aside>
 
         <div>
-          {activeTab === 'account' && <AccountPanel user={user} updateProfile={updateProfile} />}
+          {activeTab === 'account' && (
+            <AccountPanel
+              user={user}
+              updateProfile={updateProfile}
+              uploadAvatar={uploadAvatar}
+              removeAvatar={removeAvatar}
+            />
+          )}
           {activeTab === 'orders' && <OrdersPanel />}
           {activeTab === 'password' && <PasswordPanel updateProfile={updateProfile} />}
           {activeTab === 'returns' && (

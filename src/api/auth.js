@@ -30,3 +30,13 @@ export function getProfile() {
 export function updateProfile(payload) {
   return api.put('/Api/update', payload).then((r) => r.data)
 }
+
+export function uploadAvatar(file) {
+  const formData = new FormData()
+  formData.append('image', file)
+  return api.post('/Api/avatar', formData).then((r) => r.data)
+}
+
+export function removeAvatar() {
+  return api.delete('/Api/avatar').then((r) => r.data)
+}
