@@ -32,7 +32,6 @@ export default function Collections() {
         .filter((r) => r.product)
         .map(({ cat, product }) => ({
           category: cat,
-          desc: product.description,
           image: product.image?.[0]?.url,
         }))
       setItems(list)
@@ -44,9 +43,9 @@ export default function Collections() {
   }, [])
 
   return (
-    <section id="collections" className="mx-auto max-w-[1280px] px-5 py-16 lg:px-10">
-      <div className="mb-6 flex items-end justify-between border-b border-black/10 pb-4">
-        <h2 className="text-2xl font-bold text-[#1a1a17] sm:text-3xl">Premium collections</h2>
+    <section id="collections" className="mx-auto max-w-[1280px] px-5 py-7 lg:px-10">
+      <div className="mb-2.5 flex items-end justify-between border-b border-black/10 pb-2">
+        <h2 className="text-[15px] font-bold text-[#1a1a17] sm:text-lg">Premium collections</h2>
         <a
           href="/shop"
           className="text-xs font-semibold uppercase tracking-wide text-[#3c6e35] hover:underline"
@@ -63,24 +62,23 @@ export default function Collections() {
             <a
               key={item.category}
               href={`/shop?category=${encodeURIComponent(item.category)}`}
-              className="group block p-5"
+              className="group block p-2"
             >
               <img
                 src={item.image}
                 alt={item.category}
-                className="aspect-[4/3] w-full rounded-sm object-cover"
+                className="aspect-[16/10] w-full rounded-sm object-cover"
               />
-              <div className="pt-3">
+              <div className="pt-1.5">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-[15px] font-bold text-[#1a1a17]">{item.category}</p>
+                  <p className="text-[12px] font-bold text-[#1a1a17]">{item.category}</p>
                   <span
-                    className="text-[11px] font-semibold uppercase tracking-wide text-[#3c6e35] transition group-hover:underline"
+                    className="text-[10px] font-semibold uppercase tracking-wide text-[#3c6e35] transition group-hover:underline"
                     onClick={() => navigate(`/shop?category=${encodeURIComponent(item.category)}`)}
                   >
                     Shop
                   </span>
                 </div>
-                <p className="mt-1 text-[12px] text-[#8a897f]">{item.desc}</p>
               </div>
             </a>
           ))}
