@@ -57,23 +57,25 @@ export default function Collections() {
       {loading ? (
         <p className="py-10 text-center text-sm text-[#7a7a72]">Loading collections&hellip;</p>
       ) : (
-        <div className="grid grid-cols-2 divide-x divide-y divide-black/10 border border-black/10 sm:grid-cols-4">
+        <div className="mx-auto grid max-w-[880px] grid-cols-4 divide-x divide-y divide-black/10 border border-black/10">
           {items.map((item) => (
             <a
               key={item.category}
               href={`/shop?category=${encodeURIComponent(item.category)}`}
-              className="group block p-2"
+              className="group block p-1.5"
             >
-              <img
-                src={item.image}
-                alt={item.category}
-                className="aspect-[16/10] w-full rounded-sm object-cover"
-              />
-              <div className="pt-1.5">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-[12px] font-bold text-[#1a1a17]">{item.category}</p>
+              <div className="flex aspect-square w-full items-center justify-center rounded-sm bg-[#f2f1ec] p-1.5">
+                <img
+                  src={item.image}
+                  alt={item.category}
+                  className="h-full w-full object-contain p-2"
+                />
+              </div>
+              <div className="pt-1">
+                <div className="flex items-center justify-between gap-1">
+                  <p className="truncate text-[11px] font-bold text-[#1a1a17]">{item.category}</p>
                   <span
-                    className="text-[10px] font-semibold uppercase tracking-wide text-[#3c6e35] transition group-hover:underline"
+                    className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-[#3c6e35] transition group-hover:underline"
                     onClick={() => navigate(`/shop?category=${encodeURIComponent(item.category)}`)}
                   >
                     Shop
