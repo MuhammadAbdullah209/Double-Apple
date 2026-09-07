@@ -57,18 +57,18 @@ export default function Collections() {
       {loading ? (
         <p className="py-10 text-center text-sm text-[#7a7a72]">Loading collections&hellip;</p>
       ) : (
-        <div className="mx-auto grid max-w-[880px] grid-cols-4 divide-x divide-y divide-black/10 border border-black/10">
+        <div className="grid grid-cols-4 divide-x divide-y divide-black/10 border border-black/10">
           {items.map((item) => (
             <a
               key={item.category}
               href={`/shop?category=${encodeURIComponent(item.category)}`}
               className="group block p-1.5"
             >
-              <div className="flex aspect-square w-full items-center justify-center rounded-sm bg-[#f2f1ec] p-1.5">
+              <div className="flex aspect-[3/2] w-full items-center justify-center rounded-sm bg-[#f2f1ec] p-1.5">
                 <img
                   src={item.image}
                   alt={item.category}
-                  className="h-full w-full object-contain p-2"
+                  className="h-full w-full object-contain p-1.5"
                 />
               </div>
               <div className="pt-1">
