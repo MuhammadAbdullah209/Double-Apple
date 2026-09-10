@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import Header from './Header'
 import Footer from './Footer'
+import FooterDisclaimers from './FooterDisclaimers'
 import AgeVerificationModal from './AgeVerificationModal'
 import CartDrawer from './CartDrawer'
 import TabAttentionGrabber from './TabAttentionGrabber'
@@ -13,6 +14,7 @@ export default function Layout() {
       <Header />
       <Outlet />
       <Footer />
+      <FooterDisclaimers />
       <CartDrawer />
     </div>
   )

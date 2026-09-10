@@ -104,10 +104,6 @@ export default function Footer() {
           </div>
         ))}
       </div>
-
-      <p className="mx-auto max-w-[1280px] pt-6 text-center text-xs text-white/40">
-        &copy; 2026 Double Apple Smoke and Vape. All rights reserved.
-      </p>
     </footer>
   )
 }

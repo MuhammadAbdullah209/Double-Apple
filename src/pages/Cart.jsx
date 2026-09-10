@@ -9,6 +9,7 @@ import { getImageForCategory } from '../data/productImages'
 import ProductCard from '../components/ProductCard'
 import VisitUs from '../components/VisitUs'
 import CardPaymentForm from '../components/CardPaymentForm'
+import PaymentIcons from '../components/PaymentIcons'
 
 const COUPONS = {
   WELCOME10: 0.1,
@@ -742,6 +743,9 @@ export default function Cart() {
                   ? 'Your card will be charged immediately.'
                   : 'Cash On Delivery — you pay when your order arrives.'}
               </p>
+              <div className="mt-4">
+                <PaymentIcons />
+              </div>
             </div>
           </aside>
         </div>
