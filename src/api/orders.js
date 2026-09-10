@@ -15,3 +15,9 @@ export function getOrderById(id) {
 export function cancelOrder(id) {
   return api.put(`/Order/${id}`).then((r) => r.data)
 }
+
+export function chargeAuthorizeNetOrder({ items, shippingAddress, guestInfo, opaqueData }) {
+  return api
+    .post('/Order/authorizenet/charge', { items, shippingAddress, guestInfo, opaqueData })
+    .then((r) => r.data)
+}
