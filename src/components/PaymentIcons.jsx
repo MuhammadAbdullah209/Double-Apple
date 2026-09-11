@@ -114,7 +114,7 @@ function ApplePayIcon({ mono }) {
   )
 }
 
-function AuthorizeNetIcon({ mono }) {
+export function AuthorizeNetIcon({ mono }) {
   return (
     <IconCard mono={mono} bg="#00558C" border={!mono} wide>
       <span className={`text-[5px] font-bold tracking-tight ${mono ? 'text-white/85' : 'text-white'}`}>

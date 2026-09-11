@@ -88,53 +88,55 @@ const CardPaymentForm = forwardRef(function CardPaymentForm(_, ref) {
   }))
 
   return (
-    <div className="mt-4 rounded-xl border border-black/10 p-5">
-      {loadError && <p className="mb-3 text-xs font-medium text-red-600">{loadError}</p>}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="relative sm:col-span-2">
+    <div className="mt-3 rounded-lg border border-black/10 p-3">
+      {loadError && <p className="mb-2 text-[11px] font-medium text-red-600">{loadError}</p>}
+      <div className="flex flex-col gap-2">
+        <div className="relative">
           <input
             placeholder="Card Number"
             inputMode="numeric"
             autoComplete="cc-number"
             value={card.number}
             onChange={(e) => setCard((c) => ({ ...c, number: e.target.value }))}
-            className="w-full rounded-md border border-black/15 px-3 py-2 pr-11 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
+            className="w-full rounded-md border border-black/15 px-2.5 py-1.5 pr-9 text-xs text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
           />
           {BrandIcon && (
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+            <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 scale-[0.7]">
               <BrandIcon />
             </span>
           )}
         </div>
-        <input
-          placeholder="MM"
-          inputMode="numeric"
-          autoComplete="cc-exp-month"
-          maxLength={2}
-          value={card.month}
-          onChange={(e) => setCard((c) => ({ ...c, month: e.target.value }))}
-          className="rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
-        />
-        <input
-          placeholder="YYYY"
-          inputMode="numeric"
-          autoComplete="cc-exp-year"
-          maxLength={4}
-          value={card.year}
-          onChange={(e) => setCard((c) => ({ ...c, year: e.target.value }))}
-          className="rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
-        />
-        <input
-          placeholder="CVV"
-          inputMode="numeric"
-          autoComplete="cc-csc"
-          maxLength={4}
-          value={card.code}
-          onChange={(e) => setCard((c) => ({ ...c, code: e.target.value }))}
-          className="rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40 sm:col-span-2"
-        />
+        <div className="grid grid-cols-3 gap-2">
+          <input
+            placeholder="MM"
+            inputMode="numeric"
+            autoComplete="cc-exp-month"
+            maxLength={2}
+            value={card.month}
+            onChange={(e) => setCard((c) => ({ ...c, month: e.target.value }))}
+            className="w-full rounded-md border border-black/15 px-2 py-1.5 text-xs text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
+          />
+          <input
+            placeholder="YYYY"
+            inputMode="numeric"
+            autoComplete="cc-exp-year"
+            maxLength={4}
+            value={card.year}
+            onChange={(e) => setCard((c) => ({ ...c, year: e.target.value }))}
+            className="w-full rounded-md border border-black/15 px-2 py-1.5 text-xs text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
+          />
+          <input
+            placeholder="CVV"
+            inputMode="numeric"
+            autoComplete="cc-csc"
+            maxLength={4}
+            value={card.code}
+            onChange={(e) => setCard((c) => ({ ...c, code: e.target.value }))}
+            className="w-full rounded-md border border-black/15 px-2 py-1.5 text-xs text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
+          />
+        </div>
       </div>
-      <p className="mt-3 text-xs text-[#9a988e]">
+      <p className="mt-2 text-[10px] leading-snug text-[#9a988e]">
         {ready
           ? 'Your card details are encrypted by Authorize.Net and never touch our servers.'
           : 'Loading secure card processor…'}

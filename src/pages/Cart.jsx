@@ -10,7 +10,7 @@ import ProductCard from '../components/ProductCard'
 import VisitUs from '../components/VisitUs'
 import CardPaymentForm from '../components/CardPaymentForm'
 import PayPalCheckoutButton from '../components/PayPalCheckoutButton'
-import PaymentIcons from '../components/PaymentIcons'
+import PaymentIcons, { AuthorizeNetIcon, PayPalIcon } from '../components/PaymentIcons'
 
 const COUPONS = {
   WELCOME10: 0.1,
@@ -53,6 +53,21 @@ function CardIcon() {
   )
 }
 
+function ChevronIcon({ className = '' }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className}>
+      <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+// Add another entry here to plug in a new payment provider — its collapsed
+// pill shows up in the row automatically and its panel renders on expand.
+const PAYMENT_GATEWAYS = [
+  { id: 'authorize', label: 'Card', icon: AuthorizeNetIcon },
+  { id: 'paypal', label: 'PayPal', icon: PayPalIcon },
+]
+
 const EMPTY_ADDRESS_FORM = { street: '', city: '', province: '', postalCode: '', country: '' }
 const EMPTY_GUEST_FORM = { firstName: '', lastName: '', email: '', phone: '' }
 
@@ -78,6 +93,7 @@ export default function Cart() {
   const [notingId, setNotingId] = useState(null)
 
   const [paymentMode, setPaymentMode] = useState('cod') // 'cod' | 'card'
+  const [activeGateway, setActiveGateway] = useState('authorize') // which provider's panel is expanded
   const cardFormRef = useRef(null)
 
   const [placedOrder, setPlacedOrder] = useState(null)
@@ -658,19 +674,41 @@ export default function Cart() {
             )}
             {paymentMode === 'card' && (
               <>
-                <CardPaymentForm ref={cardFormRef} />
-                <div className="mt-4 flex items-center gap-3">
-                  <div className="h-px flex-1 bg-black/10" />
-                  <span className="text-xs font-semibold uppercase tracking-wide text-[#9a988e]">
-                    Or Pay With
-                  </span>
-                  <div className="h-px flex-1 bg-black/10" />
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {PAYMENT_GATEWAYS.map((gw) => {
+                    const Icon = gw.icon
+                    const isOpen = activeGateway === gw.id
+                    return (
+                      <button
+                        key={gw.id}
+                        type="button"
+                        onClick={() => setActiveGateway(isOpen ? null : gw.id)}
+                        className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition ${
+                          isOpen
+                            ? 'border-[#3CA43C] bg-[#eef4e9] text-[#3c6e35]'
+                            : 'border-black/15 text-[#4a4a43] hover:bg-black/5'
+                        }`}
+                      >
+                        <span className="scale-[0.8]">
+                          <Icon />
+                        </span>
+                        {gw.label}
+                        <ChevronIcon
+                          className={`h-3 w-3 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                        />
+                      </button>
+                    )
+                  })}
                 </div>
-                <PayPalCheckoutButton
-                  getOrderPayload={buildOrderPayload}
-                  onApproved={handleOrderPlaced}
-                  onError={setPlaceError}
-                />
+
+                {activeGateway === 'authorize' && <CardPaymentForm ref={cardFormRef} />}
+                {activeGateway === 'paypal' && (
+                  <PayPalCheckoutButton
+                    getOrderPayload={buildOrderPayload}
+                    onApproved={handleOrderPlaced}
+                    onError={setPlaceError}
+                  />
+                )}
               </>
             )}
           </div>
@@ -761,17 +799,23 @@ export default function Cart() {
                 <p className="mt-3 text-xs font-medium text-red-600">{placeError}</p>
               )}
 
-              <button
-                type="button"
-                onClick={placeOrder}
-                disabled={placing}
-                className="mt-5 w-full rounded-md bg-[#3CA43C] px-6 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-[#2f8a30] disabled:opacity-60"
-              >
-                {placing ? 'Placing Order…' : paymentMode === 'card' ? 'Pay & Place Order' : 'Place Order'}
-              </button>
+              {(paymentMode === 'cod' || (paymentMode === 'card' && activeGateway === 'authorize')) && (
+                <button
+                  type="button"
+                  onClick={placeOrder}
+                  disabled={placing}
+                  className="mt-5 w-full rounded-md bg-[#3CA43C] px-6 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-[#2f8a30] disabled:opacity-60"
+                >
+                  {placing ? 'Placing Order…' : paymentMode === 'card' ? 'Pay & Place Order' : 'Place Order'}
+                </button>
+              )}
               <p className="mt-2 text-center text-xs text-[#7a7a72]">
                 {paymentMode === 'card'
-                  ? 'Pay with your card above, or use the PayPal button to complete your payment.'
+                  ? activeGateway === 'paypal'
+                    ? 'Use the PayPal button above to complete your payment.'
+                    : activeGateway === 'authorize'
+                      ? 'Your card will be charged immediately.'
+                      : 'Choose a payment provider above to continue.'
                   : 'Cash On Delivery — you pay when your order arrives.'}
               </p>
               <div className="mt-4">

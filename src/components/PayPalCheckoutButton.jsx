@@ -41,7 +41,7 @@ export default function PayPalCheckoutButton({ getOrderPayload, onApproved, onEr
         if (cancelled || !containerRef.current) return
 
         buttonsRef.current = window.paypal.Buttons({
-          style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal', height: 35 },
+          style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal', height: 27 },
 
           createOrder: async () => {
             const payload = getOrderPayload()
@@ -75,13 +75,13 @@ export default function PayPalCheckoutButton({ getOrderPayload, onApproved, onEr
   }, [])
 
   return (
-    <div className="relative z-0 isolate mt-4 rounded-xl border border-black/10 p-5">
+    <div className="relative z-0 isolate mt-3 rounded-lg border border-black/10 p-3">
       {!PAYPAL_CLIENT_ID && (
-        <p className="mb-3 text-xs font-medium text-red-600">PayPal is not configured yet.</p>
+        <p className="mb-2 text-[11px] font-medium text-red-600">PayPal is not configured yet.</p>
       )}
-      {loadError && <p className="mb-3 text-xs font-medium text-red-600">{loadError}</p>}
-      <div ref={containerRef} className="relative z-0 mx-auto max-w-xs" />
-      <p className="mt-3 text-xs text-[#9a988e]">
+      {loadError && <p className="mb-2 text-[11px] font-medium text-red-600">{loadError}</p>}
+      <div ref={containerRef} className="relative z-0 mx-auto max-w-[200px]" />
+      <p className="mt-2 text-center text-[10px] leading-snug text-[#9a988e]">
         You&rsquo;ll approve the payment in a secure PayPal window, then be brought right back here.
       </p>
     </div>
