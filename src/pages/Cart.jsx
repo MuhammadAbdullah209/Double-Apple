@@ -134,7 +134,7 @@ export default function Cart() {
   const grandTotal = subtotal + protectionTotal - discount
 
   const selectedAddress = savedAddresses.find((a) => a._id === selectedAddressId) || null
-  const shippingAddress = addingAddress ? addressForm : selectedAddress
+  const shippingAddress = !isAuthenticated ? addressForm : addingAddress ? addressForm : selectedAddress
 
   const applyCoupon = () => {
     const code = couponInput.trim().toUpperCase()
@@ -150,7 +150,8 @@ export default function Cart() {
   const saveNewAddress = async (e) => {
     e.preventDefault()
     if (!isAuthenticated) {
-      setAddingAddress(false)
+      // Guests have nowhere to save to — addressForm already drives
+      // shippingAddress directly, so just keep the form open as-is.
       return
     }
     setSavingAddress(true)
