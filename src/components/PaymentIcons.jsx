@@ -11,7 +11,7 @@ function IconCard({ children, bg = '#fff', border = true, wide = false, mono = f
   )
 }
 
-function MastercardIcon({ mono }) {
+export function MastercardIcon({ mono }) {
   return (
     <IconCard mono={mono}>
       <svg viewBox="0 0 40 24" className="h-3 w-5">
@@ -23,7 +23,7 @@ function MastercardIcon({ mono }) {
   )
 }
 
-function VisaIcon({ mono }) {
+export function VisaIcon({ mono }) {
   return (
     <IconCard mono={mono}>
       <span className={`text-[7px] font-black italic tracking-tighter ${mono ? 'text-white/85' : 'text-[#1A1F71]'}`}>
@@ -33,7 +33,7 @@ function VisaIcon({ mono }) {
   )
 }
 
-function DiscoverIcon({ mono }) {
+export function DiscoverIcon({ mono }) {
   return (
     <IconCard mono={mono} bg="#f2f1ec">
       <span className={`text-[4px] font-extrabold tracking-tight ${mono ? 'text-white/85' : 'text-[#1a1a17]'}`}>
@@ -43,7 +43,17 @@ function DiscoverIcon({ mono }) {
   )
 }
 
-function PayPalIcon({ mono }) {
+export function AmexIcon({ mono }) {
+  return (
+    <IconCard mono={mono} bg="#006FCF" border={!mono}>
+      <span className={`text-[5px] font-bold tracking-tight ${mono ? 'text-white/85' : 'text-white'}`}>
+        AMEX
+      </span>
+    </IconCard>
+  )
+}
+
+export function PayPalIcon({ mono }) {
   return (
     <IconCard mono={mono}>
       <span className="text-[7px] font-black italic tracking-tighter">

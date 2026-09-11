@@ -9,6 +9,7 @@ import { getImageForCategory } from '../data/productImages'
 import ProductCard from '../components/ProductCard'
 import VisitUs from '../components/VisitUs'
 import CardPaymentForm from '../components/CardPaymentForm'
+import PayPalCheckoutButton from '../components/PayPalCheckoutButton'
 import PaymentIcons from '../components/PaymentIcons'
 
 const COUPONS = {
@@ -150,28 +151,44 @@ export default function Cart() {
     }
   }
 
-  const placeOrder = async () => {
-    setPlaceError('')
+  // Shared by the COD/card submit flow and the PayPal button's createOrder
+  // callback — validates the address/guest fields and shapes the payload the
+  // backend expects. Returns null (after setting placeError) when invalid.
+  const buildOrderPayload = () => {
     if (!shippingAddress?.street || !shippingAddress?.city || !shippingAddress?.province || !shippingAddress?.country) {
       setPlaceError('Please provide a complete shipping address.')
-      return
+      return null
     }
     if (!isAuthenticated) {
       if (!guestForm.firstName || !guestForm.lastName || !guestForm.email || !guestForm.phone) {
         setPlaceError('Please fill in your contact details to check out as a guest.')
-        return
+        return null
       }
     }
 
-    const orderItems = items.map((i) => ({ productId: i._id, quantity: i.qty }))
-    const orderShippingAddress = {
-      street: shippingAddress.street,
-      city: shippingAddress.city,
-      province: shippingAddress.province,
-      postalCode: shippingAddress.postalCode,
-      country: shippingAddress.country,
+    setPlaceError('')
+    return {
+      items: items.map((i) => ({ productId: i._id, quantity: i.qty })),
+      shippingAddress: {
+        street: shippingAddress.street,
+        city: shippingAddress.city,
+        province: shippingAddress.province,
+        postalCode: shippingAddress.postalCode,
+        country: shippingAddress.country,
+      },
+      guestInfo: isAuthenticated ? undefined : guestForm,
     }
-    const orderGuestInfo = isAuthenticated ? undefined : guestForm
+  }
+
+  const handleOrderPlaced = (order) => {
+    setPlacedOrder({ order, protectionTotal, discount, grandTotal: order.totalAmount + protectionTotal - discount })
+    clearCart()
+  }
+
+  const placeOrder = async () => {
+    const payload = buildOrderPayload()
+    if (!payload) return
+    const { items: orderItems, shippingAddress: orderShippingAddress, guestInfo: orderGuestInfo } = payload
 
     setPlacing(true)
     try {
@@ -198,8 +215,7 @@ export default function Cart() {
           guestInfo: orderGuestInfo,
         }))
       }
-      setPlacedOrder({ order, protectionTotal, discount, grandTotal: order.totalAmount + protectionTotal - discount })
-      clearCart()
+      handleOrderPlaced(order)
     } catch (err) {
       setPlaceError(err.response?.data?.message || 'Could not place your order. Please try again.')
     } finally {
@@ -635,12 +651,27 @@ export default function Cart() {
               </button>
             </div>
 
-            {paymentMode === 'cod' ? (
+            {paymentMode === 'cod' && (
               <p className="mt-2 text-xs text-[#9a988e]">
                 Cash On Delivery — you pay when your order arrives.
               </p>
-            ) : (
-              <CardPaymentForm ref={cardFormRef} />
+            )}
+            {paymentMode === 'card' && (
+              <>
+                <CardPaymentForm ref={cardFormRef} />
+                <div className="mt-4 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-black/10" />
+                  <span className="text-xs font-semibold uppercase tracking-wide text-[#9a988e]">
+                    Or Pay With
+                  </span>
+                  <div className="h-px flex-1 bg-black/10" />
+                </div>
+                <PayPalCheckoutButton
+                  getOrderPayload={buildOrderPayload}
+                  onApproved={handleOrderPlaced}
+                  onError={setPlaceError}
+                />
+              </>
             )}
           </div>
 
@@ -740,7 +771,7 @@ export default function Cart() {
               </button>
               <p className="mt-2 text-center text-xs text-[#7a7a72]">
                 {paymentMode === 'card'
-                  ? 'Your card will be charged immediately.'
+                  ? 'Pay with your card above, or use the PayPal button to complete your payment.'
                   : 'Cash On Delivery — you pay when your order arrives.'}
               </p>
               <div className="mt-4">

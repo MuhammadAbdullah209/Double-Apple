@@ -21,3 +21,11 @@ export function chargeAuthorizeNetOrder({ items, shippingAddress, guestInfo, opa
     .post('/Order/authorizenet/charge', { items, shippingAddress, guestInfo, opaqueData })
     .then((r) => r.data)
 }
+
+export function initiatePaypalOrder({ items, shippingAddress, guestInfo }) {
+  return api.post('/Order/paypal/create', { items, shippingAddress, guestInfo }).then((r) => r.data)
+}
+
+export function capturePaypalOrder(paypalOrderId) {
+  return api.post(`/Order/paypal/capture/${paypalOrderId}`).then((r) => r.data)
+}
