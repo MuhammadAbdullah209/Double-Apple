@@ -75,12 +75,12 @@ export default function PayPalCheckoutButton({ getOrderPayload, onApproved, onEr
   }, [])
 
   return (
-    <div className="mt-4 rounded-xl border border-black/10 p-5">
+    <div className="relative z-0 isolate mt-4 rounded-xl border border-black/10 p-5">
       {!PAYPAL_CLIENT_ID && (
         <p className="mb-3 text-xs font-medium text-red-600">PayPal is not configured yet.</p>
       )}
       {loadError && <p className="mb-3 text-xs font-medium text-red-600">{loadError}</p>}
-      <div ref={containerRef} className="mx-auto max-w-xs" />
+      <div ref={containerRef} className="relative z-0 mx-auto max-w-xs" />
       <p className="mt-3 text-xs text-[#9a988e]">
         You&rsquo;ll approve the payment in a secure PayPal window, then be brought right back here.
       </p>
