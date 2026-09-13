@@ -5,6 +5,7 @@ import FooterDisclaimers from './FooterDisclaimers'
 import AgeVerificationModal from './AgeVerificationModal'
 import CartDrawer from './CartDrawer'
 import TabAttentionGrabber from './TabAttentionGrabber'
+import RecentPurchasePopup from './RecentPurchasePopup'
 
 export default function Layout() {
   return (
@@ -16,6 +17,7 @@ export default function Layout() {
       <Footer />
       <FooterDisclaimers />
       <CartDrawer />
+      <RecentPurchasePopup />
     </div>
   )
 }
