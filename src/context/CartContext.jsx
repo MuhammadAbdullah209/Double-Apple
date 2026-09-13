@@ -38,7 +38,7 @@ export function CartProvider({ children }) {
           _id: id,
           name: product.name,
           price: product.finalPrice ?? product.price,
-          image: getImageForCategory(product.category),
+          image: product.image?.[0]?.url || getImageForCategory(product.category),
           category: product.category,
           qty,
           protection: false,

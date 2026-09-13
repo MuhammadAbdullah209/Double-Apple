@@ -38,7 +38,7 @@ export default function ProductCard({ product }) {
   const { isWishlisted, toggleWishlist } = useWishlist()
   const [added, setAdded] = useState(false)
   const soldOut = (product.stock ?? 0) <= 0
-  const image = getImageForCategory(product.category)
+  const image = product.image?.[0]?.url || getImageForCategory(product.category)
   const hasDiscount = !!product.discountActive
   const wishlisted = isWishlisted(product._id)
 
@@ -92,11 +92,11 @@ export default function ProductCard({ product }) {
       </div>
 
       <div className="flex items-center gap-1.5 px-3 pt-2.5">
-        <span className="shrink-0 rounded-md bg-[#eef4e9] px-2.5 py-1 text-[11px] font-semibold text-[#3c6e35]">
+        <span className="min-w-0 flex-1 truncate rounded-md bg-[#eef4e9] px-2.5 py-1 text-[11px] font-semibold text-[#3c6e35]">
           {product.category}
         </span>
         <span
-          className={`flex-1 rounded-md border px-3 py-1 text-center text-[11px] font-bold uppercase tracking-wide transition ${
+          className={`shrink-0 rounded-md border px-3 py-1 text-center text-[11px] font-bold uppercase tracking-wide transition ${
             soldOut
               ? 'border-black/10 text-[#9a988e]'
               : 'border-[#3CA43C]/30 text-[#3CA43C] group-hover:bg-[#3CA43C] group-hover:text-white'
@@ -118,12 +118,16 @@ export default function ProductCard({ product }) {
             <span className="text-sm text-[#9a988e] line-through">${product.price}</span>
           )}
         </p>
-        <p className="mt-1 flex items-center gap-1.5 text-[11px] text-[#7a7a72]">
-          <StarIcon className="h-3 w-3 text-[#3CA43C]" />
-          <span className="font-semibold text-[#1a1a17]">5.0/5.0</span>
-          <span>|</span>
-          <span>300 sold</span>
-        </p>
+        {(product.reviewCount > 0 || product.sold > 0) && (
+          <p className="mt-1 flex items-center gap-1.5 text-[11px] text-[#7a7a72]">
+            <StarIcon className="h-3 w-3 text-[#3CA43C]" />
+            {product.reviewCount > 0 && (
+              <span className="font-semibold text-[#1a1a17]">{product.rating.toFixed(1)}/5.0</span>
+            )}
+            {product.reviewCount > 0 && product.sold > 0 && <span>|</span>}
+            {product.sold > 0 && <span>{product.sold} sold</span>}
+          </p>
+        )}
       </div>
     </Link>
   )

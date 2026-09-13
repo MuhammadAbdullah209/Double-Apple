@@ -11,11 +11,6 @@ import { getProductById, getProducts } from '../api/products'
 import * as reviewsApi from '../api/reviews'
 import { getImageForCategory } from '../data/productImages'
 
-const CATEGORY_BLURB = {
-  Kratom: 'Part of our Kratom lineup — Maeng Da, Red, Green, and White strains, lab-tested and ready to ship.',
-  'Refill Pods': 'Part of our Refill Pods lineup — Lost Mary, Foger, and Fogger flavors, always in stock at the shop.',
-}
-
 const PRODUCT_FAQS = [
   {
     q: 'Do you offer shipping?',
@@ -111,7 +106,7 @@ function ShareIcon() {
   )
 }
 
-const TABS = ['Reviews', 'Discussion', 'FAQs']
+const TABS = ['Reviews', 'Description', 'FAQs']
 
 export default function ProductDetail() {
   const { id } = useParams()
@@ -241,11 +236,8 @@ export default function ProductDetail() {
   const soldOut = (product.stock ?? 0) <= 0
   const hasDiscount = !!product.discountActive
   const displayPrice = hasDiscount ? product.finalPrice : product.price
-  const image = getImageForCategory(product.category)
+  const image = product.image?.[0]?.url || getImageForCategory(product.category)
   const subtotal = (parseFloat(displayPrice) * qty).toFixed(2)
-  const blurb =
-    CATEGORY_BLURB[product.category] ||
-    `Part of our ${product.category} lineup at Double Apple Smoke & Vape.`
 
   return (
     <>
@@ -475,17 +467,11 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              {activeTab === 'Discussion' && (
-                <p className="mx-auto mt-10 max-w-2xl text-center text-sm leading-relaxed text-[#7a7a72]">
-                  The statements made regarding these products have not been evaluated by the Food
-                  and Drug Administration. The efficacy of these products has not been confirmed by
-                  FDA-approved research. These products are not intended to diagnose, treat, cure,
-                  or prevent any disease. All information presented here is not meant as a
-                  substitute for or alternative to information from health care practitioners.
-                  Please consult your health care professional about potential interactions or
-                  other possible complications before using any product. The Federal Food, Drug,
-                  and Cosmetic Act require this notice.
-                </p>
+              {activeTab === 'Description' && product.description && (
+                <div
+                  className="mx-auto mt-8 max-w-2xl text-sm leading-relaxed text-[#4a4a43]"
+                  dangerouslySetInnerHTML={{ __html: product.description }}
+                />
               )}
               {activeTab === 'FAQs' && (
                 <div className="mx-auto mt-8 flex max-w-2xl flex-col gap-3">
@@ -532,7 +518,7 @@ export default function ProductDetail() {
               <span className="text-[#c9c8c0]">|</span>
               <span>{reviewSummary.total || 0} Reviews</span>
               <span className="text-[#c9c8c0]">|</span>
-              <span>300 sold</span>
+              <span>{product.sold || 0} sold</span>
             </div>
 
             {!soldOut && (
@@ -548,18 +534,21 @@ export default function ProductDetail() {
               )}
             </p>
 
-            <p className="mt-4 text-sm leading-relaxed text-[#4a4a43]">
-              {showFullDesc
-                ? `${product.description || blurb} Every batch is lab-tested for quality and freshness before it reaches the shelf. Stop by our Austin location or grab it in the shop for pickup.`
-                : product.description || blurb}{' '}
-              <button
-                type="button"
-                onClick={() => setShowFullDesc((v) => !v)}
-                className="font-semibold text-[#3c6e35] hover:underline"
-              >
-                {showFullDesc ? 'View Less' : 'View More'}
-              </button>
-            </p>
+            {product.description && (
+              <div className="mt-4 text-sm leading-relaxed text-[#4a4a43]">
+                <div
+                  className={showFullDesc ? '' : 'line-clamp-3'}
+                  dangerouslySetInnerHTML={{ __html: product.description }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowFullDesc((v) => !v)}
+                  className="mt-1 font-semibold text-[#3c6e35] hover:underline"
+                >
+                  {showFullDesc ? 'View Less' : 'View More'}
+                </button>
+              </div>
+            )}
 
             <p className="mt-6 text-sm font-bold text-[#1a1a17]">Availability</p>
             <div className="mt-2 flex items-center gap-2 rounded-md border border-black/10 px-4 py-3">

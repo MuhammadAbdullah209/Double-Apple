@@ -4,17 +4,7 @@ import { ChevronDownIcon } from '../components/Icons'
 import ProductCard from '../components/ProductCard'
 import VisitUs from '../components/VisitUs'
 import { getProducts } from '../api/products'
-
-const CATEGORIES = [
-  'Flower',
-  'Vapes',
-  'Kratom',
-  'Refill Pods',
-  'Ash Catcher',
-  'Shisha',
-  'Disposable Hookah',
-  'Coils / Pods',
-]
+import { CATEGORY_ORDER as CATEGORIES, CATEGORY_REAL_NAME } from '../data/categories'
 
 const RATINGS = [5, 4, 3, 2, 1]
 
@@ -45,7 +35,14 @@ export default function Shop() {
     setPage(1)
   }
 
+  // Shop stays mounted across in-app navigation to /shop (same route, just
+  // different query params), so a category picked earlier wouldn't
+  // otherwise clear when the user lands here again via a plain "/shop" link
+  // — resync the filter from the URL on every navigation, not just the
+  // first one.
   useEffect(() => {
+    const cat = searchParams.get('category')
+    setSelectedCategories(cat && CATEGORIES.includes(cat) ? [cat] : [])
     setSearchQuery(searchParams.get('search') || '')
     setPage(1)
   }, [searchParams])
@@ -57,7 +54,7 @@ export default function Shop() {
     getProducts({
       page,
       limit: perPage,
-      category: selectedCategories.length === 1 ? selectedCategories[0] : undefined,
+      category: selectedCategories.length === 1 ? CATEGORY_REAL_NAME[selectedCategories[0]] : undefined,
       search: searchQuery || undefined,
     })
       .then((data) => {
@@ -72,7 +69,9 @@ export default function Shop() {
         const q = searchQuery.trim().toLowerCase()
         list = list.filter((p) => {
           const price = p.finalPrice ?? p.price
-          const inCategory = selectedCategories.length === 0 || selectedCategories.includes(p.category)
+          const inCategory =
+            selectedCategories.length === 0 ||
+            selectedCategories.some((c) => CATEGORY_REAL_NAME[c] === p.category)
           const aboveMin = !minPrice || price >= parseFloat(minPrice)
           const belowMax = !maxPrice || price <= parseFloat(maxPrice)
           const matchesQuery = !q || p.name?.toLowerCase().includes(q)

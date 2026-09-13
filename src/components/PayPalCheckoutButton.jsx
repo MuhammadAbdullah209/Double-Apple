@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { initiatePaypalOrder, capturePaypalOrder } from '../api/orders'
 
-const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID
-const PAYPAL_CURRENCY = import.meta.env.VITE_PAYPAL_CURRENCY || 'USD'
+const PAYPAL_CLIENT_ID = (import.meta.env.VITE_PAYPAL_CLIENT_ID || '').trim()
+const PAYPAL_CURRENCY = (import.meta.env.VITE_PAYPAL_CURRENCY || 'USD').trim()
 const PAYPAL_SDK_SRC = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=${PAYPAL_CURRENCY}&intent=capture`
 
 function loadPaypalSdk() {
@@ -31,6 +31,15 @@ export default function PayPalCheckoutButton({ getOrderPayload, onApproved, onEr
   const buttonsRef = useRef(null)
   const [loadError, setLoadError] = useState('')
 
+  // Buttons() is only ever set up once (see the mount-only effect below), but
+  // the checkout details it needs (address, cart, etc.) keep changing after
+  // that. Route the SDK's callbacks through a ref that's refreshed every
+  // render so they always see the latest data instead of a stale closure
+  // frozen from whichever render happened to be current when the PayPal
+  // panel first mounted.
+  const callbacksRef = useRef({ getOrderPayload, onApproved, onError })
+  callbacksRef.current = { getOrderPayload, onApproved, onError }
+
   useEffect(() => {
     if (!PAYPAL_CLIENT_ID) return
 
@@ -44,7 +53,7 @@ export default function PayPalCheckoutButton({ getOrderPayload, onApproved, onEr
           style: { layout: 'vertical', color: 'gold', shape: 'rect', label: 'paypal', height: 27 },
 
           createOrder: async () => {
-            const payload = getOrderPayload()
+            const payload = callbacksRef.current.getOrderPayload()
             if (!payload) {
               // getOrderPayload already reported the validation error.
               throw new Error('Please complete the checkout details first.')
@@ -55,11 +64,11 @@ export default function PayPalCheckoutButton({ getOrderPayload, onApproved, onEr
 
           onApprove: async (data) => {
             const { order } = await capturePaypalOrder(data.orderID)
-            onApproved(order)
+            callbacksRef.current.onApproved(order)
           },
 
           onError: (err) => {
-            onError(err?.message || 'PayPal checkout failed. Please try again.')
+            callbacksRef.current.onError(err?.message || 'PayPal checkout failed. Please try again.')
           },
         })
 

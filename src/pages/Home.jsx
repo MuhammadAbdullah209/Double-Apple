@@ -1,5 +1,6 @@
 import Hero from '../components/Hero'
 import Collections from '../components/Collections'
+import CategoryShowcase from '../components/CategoryShowcase'
 import AboutUs from '../components/AboutUs'
 import TopShop from '../components/TopShop'
 import WhyChooseUs from '../components/WhyChooseUs'
@@ -13,6 +14,8 @@ export default function Home() {
     <>
       <Hero />
       <Collections />
+      <CategoryShowcase category="Kratom" />
+      <CategoryShowcase category="Disposable Hookah" />
       <AboutUs />
       <TopShop />
       <WhyChooseUs />

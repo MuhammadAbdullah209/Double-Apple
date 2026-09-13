@@ -290,7 +290,7 @@ export default function Cart() {
                 >
                   <div className="grid h-16 w-16 shrink-0 place-items-center rounded-md bg-[#f2f1ec] p-2">
                     <img
-                      src={getImageForCategory(item.product?.category)}
+                      src={item.product?.image?.[0]?.url || getImageForCategory(item.product?.category)}
                       alt={item.product?.name}
                       className="h-full w-full object-contain"
                     />

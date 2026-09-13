@@ -1,17 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getProducts } from '../api/products'
-
-const CATEGORY_ORDER = [
-  'Flower',
-  'Vapes',
-  'Kratom',
-  'Refill Pods',
-  'Ash Catcher',
-  'Shisha',
-  'Disposable Hookah',
-  'Coils / Pods',
-]
+import { CATEGORY_ORDER, CATEGORY_REAL_NAME } from '../data/categories'
 
 export default function Collections() {
   const navigate = useNavigate()
@@ -22,7 +12,7 @@ export default function Collections() {
     let cancelled = false
     Promise.all(
       CATEGORY_ORDER.map((cat) =>
-        getProducts({ category: cat, limit: 1 })
+        getProducts({ category: CATEGORY_REAL_NAME[cat], limit: 1 })
           .then((data) => ({ cat, product: data.products?.[0] }))
           .catch(() => ({ cat, product: null }))
       )
