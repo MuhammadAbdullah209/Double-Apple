@@ -16,6 +16,7 @@ export default function Home() {
       <Collections />
       <CategoryShowcase category="Kratom" />
       <CategoryShowcase category="Disposable Hookah" />
+      <CategoryShowcase category="Hookah Pot" />
       <AboutUs />
       <TopShop />
       <WhyChooseUs />

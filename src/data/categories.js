@@ -15,6 +15,7 @@ export const CATEGORY_ORDER = [
   'Ash Catcher',
   'Shisha',
   'Disposable Hookah',
+  'Hookah Pot',
   'Coils / Pods',
 ]
 
@@ -26,5 +27,6 @@ export const CATEGORY_REAL_NAME = {
   'Ash Catcher': 'ASH CATCHER',
   Shisha: 'SHISHA AND COAL',
   'Disposable Hookah': 'DISPOSABLE HOOKAH',
+  'Hookah Pot': 'HOOKAH POT',
   'Coils / Pods': 'COIL',
 }
