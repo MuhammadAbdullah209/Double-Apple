@@ -71,7 +71,7 @@ export default function ProductCard({ product }) {
           aria-label="Add to cart"
           disabled={soldOut}
           onClick={handleAddToCart}
-          className={`absolute left-5 top-5 z-10 grid h-8 w-8 place-items-center rounded-full bg-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-40 ${
+          className={`absolute left-3 top-5 z-10 grid h-8 w-8 place-items-center rounded-full bg-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-40 ${
             added ? 'text-[#3CA43C]' : 'text-[#3c6e35]'
           }`}
         >
@@ -81,13 +81,13 @@ export default function ProductCard({ product }) {
           type="button"
           aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           onClick={handleWishlist}
-          className={`absolute right-5 top-5 z-10 grid h-8 w-8 place-items-center rounded-full bg-white shadow-sm transition ${
+          className={`absolute right-3 top-5 z-10 grid h-8 w-8 place-items-center rounded-full bg-white shadow-sm transition ${
             wishlisted ? 'text-red-500' : 'text-[#4a4a43]'
           }`}
         >
           <HeartIcon filled={wishlisted} />
         </button>
-        <div className="flex aspect-square items-center justify-center p-4">
+        <div className="flex aspect-square items-center justify-center">
           <img src={image} alt={product.name} className="h-full w-full object-contain rounded-md" />
         </div>
       </div>

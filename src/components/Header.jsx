@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useWishlist } from "../context/WishlistContext";
-import logo from "../assets/images/doubleapple.png";
+import logo from "../assets/images/DoubleApple-logo.jpeg";
 import ShopMegaMenu from "./ShopMegaMenu";
 
 const NAV = [
@@ -154,20 +154,17 @@ function Logo() {
       to="/"
       className="
         flex
-        h-[48px]
+        h-[64px]
         w-fit
         shrink-0
         items-center
         overflow-hidden
-        rounded-[2px]
-        bg-white
-        px-[10px]
       "
     >
       <img
         src={logo}
         alt="Double Apple"
-        className="h-[38px] w-auto object-contain"
+        className="h-[64px] w-auto object-contain"
       />
     </Link>
   );

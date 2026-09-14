@@ -54,11 +54,11 @@ export default function Collections() {
               href={`/shop?category=${encodeURIComponent(item.category)}`}
               className="group block p-1.5"
             >
-              <div className="flex aspect-[3/2] w-full items-center justify-center rounded-sm bg-[#f2f1ec] p-1.5">
+              <div className="flex aspect-[3/2] w-full items-center justify-center rounded-sm bg-[#f2f1ec] p-2">
                 <img
                   src={item.image}
                   alt={item.category}
-                  className="h-full w-full object-contain p-1.5"
+                  className="h-full w-full object-contain"
                 />
               </div>
               <div className="pt-1">
