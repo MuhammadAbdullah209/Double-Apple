@@ -5,6 +5,7 @@ import { getImageForCategory } from '../data/productImages'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { useWishlist } from '../context/WishlistContext'
+import { getDisplaySold, getDisplayRating } from '../utils/socialProof'
 
 function CheckIcon() {
   return (
@@ -118,16 +119,12 @@ export default function ProductCard({ product }) {
             <span className="text-sm text-[#9a988e] line-through">${product.price}</span>
           )}
         </p>
-        {(product.reviewCount > 0 || product.sold > 0) && (
-          <p className="mt-1 flex items-center gap-1.5 text-[11px] text-[#7a7a72]">
-            <StarIcon className="h-3 w-3 text-[#3CA43C]" />
-            {product.reviewCount > 0 && (
-              <span className="font-semibold text-[#1a1a17]">{product.rating.toFixed(1)}/5.0</span>
-            )}
-            {product.reviewCount > 0 && product.sold > 0 && <span>|</span>}
-            {product.sold > 0 && <span>{product.sold} sold</span>}
-          </p>
-        )}
+        <p className="mt-1 flex items-center gap-1.5 text-[11px] text-[#7a7a72]">
+          <StarIcon className="h-3 w-3 text-[#3CA43C]" />
+          <span className="font-semibold text-[#1a1a17]">{getDisplayRating(product).toFixed(1)}/5.0</span>
+          <span>|</span>
+          <span>{getDisplaySold(product)} sold</span>
+        </p>
       </div>
     </Link>
   )
