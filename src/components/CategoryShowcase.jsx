@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import ProductCard from './ProductCard'
-import { getProducts } from '../api/products'
-import { CATEGORY_REAL_NAME } from '../data/categories'
+import { getHomeCategoryProducts } from '../utils/preloadHome'
 
 // A homepage strip for one category — same idea as showing off a curated
 // aisle in-store. Pulls real synced products for that category and hides
@@ -13,7 +12,7 @@ export default function CategoryShowcase({ category, limit = 6 }) {
 
   useEffect(() => {
     let cancelled = false
-    getProducts({ category: CATEGORY_REAL_NAME[category], limit })
+    getHomeCategoryProducts(category, limit)
       .then((data) => {
         if (!cancelled) setProducts(data.products || [])
       })

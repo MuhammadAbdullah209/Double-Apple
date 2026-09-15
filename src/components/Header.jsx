@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useWishlist } from "../context/WishlistContext";
+import { preloadHomePage } from "../utils/preloadHome";
 import logo from "../assets/images/DoubleApple-logo.jpeg";
 import ShopMegaMenu from "./ShopMegaMenu";
 
@@ -152,6 +153,7 @@ function Logo() {
   return (
     <Link
       to="/"
+      onMouseEnter={preloadHomePage}
       className="
         flex
         h-[64px]
@@ -466,6 +468,7 @@ export default function Header() {
               <Link
                 key={item.label}
                 to={item.href}
+                onMouseEnter={item.href === "/" ? preloadHomePage : undefined}
                 className={`
                   flex
                   h-full

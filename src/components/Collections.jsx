@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getProducts } from '../api/products'
-import { CATEGORY_ORDER, CATEGORY_REAL_NAME } from '../data/categories'
+import { getHomeCategoryProducts } from '../utils/preloadHome'
+import { CATEGORY_ORDER } from '../data/categories'
 
 export default function Collections() {
   const navigate = useNavigate()
@@ -12,7 +12,7 @@ export default function Collections() {
     let cancelled = false
     Promise.all(
       CATEGORY_ORDER.map((cat) =>
-        getProducts({ category: CATEGORY_REAL_NAME[cat], limit: 1 })
+        getHomeCategoryProducts(cat, 1)
           .then((data) => ({ cat, product: data.products?.[0] }))
           .catch(() => ({ cat, product: null }))
       )
@@ -47,7 +47,7 @@ export default function Collections() {
       {loading ? (
         <p className="py-10 text-center text-sm text-[#7a7a72]">Loading collections&hellip;</p>
       ) : (
-        <div className="grid grid-cols-4 divide-x divide-y divide-black/10 border border-black/10">
+        <div className="grid grid-cols-2 divide-x divide-y divide-black/10 border border-black/10 sm:grid-cols-4">
           {items.map((item) => (
             <a
               key={item.category}
