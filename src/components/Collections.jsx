@@ -1,30 +1,49 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getHomeCategoryProducts } from '../utils/preloadHome'
+import { getHomeCategoryProducts, getCachedHomeCategoryProducts } from '../utils/preloadHome'
 import { CATEGORY_ORDER } from '../data/categories'
+
+function buildItems(entries) {
+  return entries
+    .filter((r) => r.product)
+    .map(({ cat, product }) => ({
+      category: cat,
+      image: product.image?.[0]?.url,
+    }))
+}
+
+// Seeded once at module scope (not per-mount) — cheap Map lookups, and every
+// Collections instance in the same session sees the same last-known-good data.
+const initialItems = buildItems(
+  CATEGORY_ORDER.map((cat) => ({
+    cat,
+    product: getCachedHomeCategoryProducts(cat, 1)?.products?.[0] || null,
+  }))
+)
 
 export default function Collections() {
   const navigate = useNavigate()
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [items, setItems] = useState(initialItems)
+  // Only show the loading state when there's nothing cached to show yet — a
+  // background revalidation should never blank an already-populated section.
+  const [loading, setLoading] = useState(initialItems.length === 0)
 
   useEffect(() => {
     let cancelled = false
     Promise.all(
       CATEGORY_ORDER.map((cat) =>
         getHomeCategoryProducts(cat, 1)
-          .then((data) => ({ cat, product: data.products?.[0] }))
-          .catch(() => ({ cat, product: null }))
+          .then((data) => ({ cat, product: data.products?.[0] || null }))
+          .catch(() => ({
+            cat,
+            // A failed revalidation shouldn't drop a tile that was already
+            // showing from cache — fall back to the last-known-good product.
+            product: getCachedHomeCategoryProducts(cat, 1)?.products?.[0] || null,
+          }))
       )
     ).then((results) => {
       if (cancelled) return
-      const list = results
-        .filter((r) => r.product)
-        .map(({ cat, product }) => ({
-          category: cat,
-          image: product.image?.[0]?.url,
-        }))
-      setItems(list)
+      setItems(buildItems(results))
       setLoading(false)
     })
     return () => {

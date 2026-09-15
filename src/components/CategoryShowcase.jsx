@@ -1,14 +1,21 @@
 import { useEffect, useState } from 'react'
 import ProductCard from './ProductCard'
-import { getHomeCategoryProducts } from '../utils/preloadHome'
+import { getHomeCategoryProducts, getCachedHomeCategoryProducts } from '../utils/preloadHome'
 
 // A homepage strip for one category — same idea as showing off a curated
 // aisle in-store. Pulls real synced products for that category and hides
 // itself entirely if there aren't any yet, rather than showing an empty
 // section.
 export default function CategoryShowcase({ category, limit = 6 }) {
-  const [products, setProducts] = useState([])
-  const [loading, setLoading] = useState(true)
+  // Last-known-good data from a prior visit (or an already-settled fetch this
+  // session) seeds the first render directly — so a background revalidation
+  // never blanks the section back out to a loading state.
+  const [products, setProducts] = useState(
+    () => getCachedHomeCategoryProducts(category, limit)?.products || []
+  )
+  const [loading, setLoading] = useState(
+    () => getCachedHomeCategoryProducts(category, limit) === null
+  )
 
   useEffect(() => {
     let cancelled = false
@@ -17,7 +24,9 @@ export default function CategoryShowcase({ category, limit = 6 }) {
         if (!cancelled) setProducts(data.products || [])
       })
       .catch(() => {
-        if (!cancelled) setProducts([])
+        // A failed revalidation shouldn't drop products that were already
+        // showing from cache — fall back to the last-known-good list.
+        if (!cancelled) setProducts(getCachedHomeCategoryProducts(category, limit)?.products || [])
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
