@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { StarIcon, CartIcon, ChevronDownIcon } from '../components/Icons'
 import ProductCard from '../components/ProductCard'
 import ShareModal from '../components/ShareModal'
@@ -10,6 +10,7 @@ import { useWishlist } from '../context/WishlistContext'
 import { getProductById, getProducts } from '../api/products'
 import * as reviewsApi from '../api/reviews'
 import { getImageForCategory } from '../data/productImages'
+import { slugify } from '../data/products'
 import {
   getDisplaySold,
   getDisplayRating,
@@ -116,7 +117,8 @@ function ShareIcon() {
 const TABS = ['Reviews', 'Description', 'FAQs']
 
 export default function ProductDetail() {
-  const { id } = useParams()
+  const { slug } = useParams()
+  const { state } = useLocation()
   const navigate = useNavigate()
   const { addItem } = useCart()
   const { isAuthenticated, user, loading: authLoading } = useAuth()
@@ -165,8 +167,8 @@ export default function ProductDetail() {
   useEffect(() => {
     // Re-fetches once auth restoration finishes (e.g. after a hard reload), so a
     // just-signed-in user's own pending review shows up without needing a manual refresh.
-    loadReviews(id)
-  }, [id, authLoading])
+    if (product) loadReviews(product._id)
+  }, [product, authLoading])
 
   const openReviewForm = () => {
     if (!isAuthenticated) {
@@ -184,8 +186,8 @@ export default function ProductDetail() {
     setReviewSubmitting(true)
     setReviewError('')
     try {
-      await reviewsApi.writeReview(id, { rating: reviewRating, comment: reviewComment })
-      loadReviews(id)
+      await reviewsApi.writeReview(product._id, { rating: reviewRating, comment: reviewComment })
+      loadReviews(product._id)
       setShowReviewForm(false)
     } catch (err) {
       setReviewError(err.response?.data?.message || 'Could not save your review. Please try again.')
@@ -199,7 +201,22 @@ export default function ProductDetail() {
     setLoading(true)
     setProduct(null)
     setRelated([])
-    getProductById(id)
+
+    // If navigated from an internal link, the product _id is passed via
+    // router state — use it to fetch directly and skip the slug search.
+    // If the user types/shares the URL directly (no state), fall back to a
+    // name-search and exact slugify() match.
+    const fetchById = (id) => getProductById(id)
+    const fetchBySlug = () =>
+      getProducts({ search: slug.replace(/-/g, ' '), limit: 50 }).then((data) => {
+        const match = (data.products || []).find((p) => slugify(p.name) === slug)
+        if (!match) throw new Error('not found')
+        return { product: match }
+      })
+
+    const fetcher = state?.id ? fetchById(state.id) : fetchBySlug()
+
+    fetcher
       .then((data) => {
         if (cancelled) return
         // Render the product as soon as it's ready — related products are a
@@ -211,7 +228,9 @@ export default function ProductDetail() {
       })
       .then((relatedData) => {
         if (cancelled || !relatedData) return
-        setRelated((relatedData.products || []).filter((p) => p._id !== id).slice(0, 6))
+        setRelated(
+          (relatedData.products || []).filter((p) => p._id !== state?.id).slice(0, 6)
+        )
       })
       .catch(() => {
         if (!cancelled) setLoading(false)
@@ -219,7 +238,7 @@ export default function ProductDetail() {
     return () => {
       cancelled = true
     }
-  }, [id])
+  }, [slug, state?.id])
 
   if (loading) {
     return (

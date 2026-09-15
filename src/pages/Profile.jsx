@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { getMyOrders, cancelOrder } from '../api/orders'
 import { getMyReviews, deleteReview } from '../api/reviews'
 import { StarIcon } from '../components/Icons'
+import { slugify } from '../data/products'
 
 /* ================================
    ICONS
@@ -413,7 +414,8 @@ function ReviewsPanel() {
                   <div>
                     {review.product ? (
                       <Link
-                        to={`/shop/${review.product._id}`}
+                        to={`/products/${slugify(review.product.name)}`}
+                        state={{ id: review.product._id }}
                         className="text-sm font-bold text-[#1a1a17] hover:text-[#3c6e35]"
                       >
                         {review.product.name}

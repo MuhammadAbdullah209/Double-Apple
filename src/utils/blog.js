@@ -11,3 +11,12 @@ export function formatBlogDate(date) {
     year: 'numeric',
   })
 }
+
+// Generates a clean URL slug from a blog title, e.g.
+// "Al Fakher Rose 250g – Review" → "al-fakher-rose-250g-review"
+export function slugifyBlog(title) {
+  return (title || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+}

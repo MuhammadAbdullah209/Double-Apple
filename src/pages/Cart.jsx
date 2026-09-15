@@ -6,6 +6,7 @@ import { getAddresses, createAddress } from '../api/addresses'
 import { createOrder, chargeAuthorizeNetOrder } from '../api/orders'
 import { getProducts } from '../api/products'
 import { getImageForCategory } from '../data/productImages'
+import { slugify } from '../data/products'
 import ProductCard from '../components/ProductCard'
 import VisitUs from '../components/VisitUs'
 import CardPaymentForm from '../components/CardPaymentForm'
@@ -416,7 +417,8 @@ export default function Cart() {
 
                     <div className="min-w-0 flex-1">
                       <Link
-                        to={`/shop/${item._id}`}
+                        to={`/products/${slugify(item.name)}`}
+                        state={{ id: item._id }}
                         className="text-sm font-bold uppercase tracking-wide text-[#1a1a17] underline hover:text-[#3c6e35]"
                       >
                         {item.name}

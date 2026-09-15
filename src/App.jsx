@@ -32,12 +32,13 @@ function App() {
           <Route path="/create-account/verify" element={<VerifyOtp />} />
           <Route path="/sign-in" element={<SignIn />} />
           <Route path="/shop" element={<Shop />} />
-          <Route path="/shop/:id" element={<ProductDetail />} />
+          <Route path="/collections/:slug" element={<Shop />} />
+          <Route path="/products/:slug" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/about-us" element={<AboutUs />} />
           <Route path="/contact-us" element={<ContactUs />} />
           <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:id" element={<BlogDetail />} />
+          <Route path="/blog/:slug" element={<BlogDetail />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/return-policy" element={<ReturnPolicy />} />

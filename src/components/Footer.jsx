@@ -20,15 +20,15 @@ const LINK_ROUTES = {
   Shipping: '/shipping-policy',
   'Terms of Services': '/terms-of-service',
   'Refund Policy': '/refund-policy',
-  // Shop column — routes to the Shop page pre-filtered by category (matches
-  // Shop.jsx's CATEGORIES list). "Hookah" maps to its closest real category;
-  // "Accessories" has no matching category there, so it links to the
-  // unfiltered shop instead of a misleading filter.
-  Flower: '/shop?category=Flower',
-  Vapes: '/shop?category=Vapes',
-  Kratom: '/shop?category=Kratom',
-  Hookah: '/shop?category=Disposable Hookah',
-  'Refill Pods': '/shop?category=Refill Pods',
+  // Shop column — routes to the Shop page pre-filtered by category using the
+  // /collections/:slug pattern matching the original site. "Hookah" maps to
+  // its closest real category; "Accessories" has no matching category so it
+  // links to the unfiltered shop instead of a misleading filter.
+  Flower: '/collections/flower',
+  Vapes: '/collections/vapes',
+  Kratom: '/collections/kratom',
+  Hookah: '/collections/disposable-hookah',
+  'Refill Pods': '/collections/refill-pods',
   Accessories: '/shop',
 }
 

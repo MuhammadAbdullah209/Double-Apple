@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useParams } from 'react-router-dom'
 import { ChevronDownIcon } from '../components/Icons'
 import ProductCard from '../components/ProductCard'
 import VisitUs from '../components/VisitUs'
@@ -9,6 +9,7 @@ import {
   CATEGORY_REAL_NAME,
   CATEGORY_PAGE_COPY,
   DEFAULT_SHOP_PAGE_COPY,
+  SLUG_TO_CATEGORY,
 } from '../data/categories'
 
 const RATINGS = [5, 4, 3, 2, 1]
@@ -21,7 +22,10 @@ const CATEGORY_FETCH_LIMIT = 300
 
 export default function Shop() {
   const [searchParams] = useSearchParams()
-  const initialCategory = searchParams.get('category')
+  const { slug } = useParams()
+  // Support both /collections/:slug and /shop?category=X
+  const categoryFromSlug = slug ? SLUG_TO_CATEGORY[slug] : null
+  const initialCategory = categoryFromSlug || searchParams.get('category')
   const [selectedCategories, setSelectedCategories] = useState(
     initialCategory && CATEGORIES.includes(initialCategory) ? [initialCategory] : []
   )
@@ -60,11 +64,12 @@ export default function Shop() {
   // — resync the filter from the URL on every navigation, not just the
   // first one.
   useEffect(() => {
-    const cat = searchParams.get('category')
+    const catFromSlug = slug ? SLUG_TO_CATEGORY[slug] : null
+    const cat = catFromSlug || searchParams.get('category')
     setSelectedCategories(cat && CATEGORIES.includes(cat) ? [cat] : [])
     setSearchQuery(searchParams.get('search') || '')
     setPage(1)
-  }, [searchParams])
+  }, [searchParams, slug])
 
   // A single selected category queries the backend directly with true
   // server-side pagination (fast, efficient). More than one category can't

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import { slugify } from '../data/products'
 
 function CloseIcon() {
   return (
@@ -104,7 +105,8 @@ export default function CartDrawer() {
 
                     <div className="min-w-0 flex-1">
                       <Link
-                        to={`/shop/${item._id}`}
+                        to={`/products/${slugify(item.name)}`}
+                        state={{ id: item._id }}
                         onClick={closeCart}
                         className="line-clamp-2 text-xs font-bold uppercase tracking-wide text-[#1a1a17] hover:text-[#3c6e35]"
                       >

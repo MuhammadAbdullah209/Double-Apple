@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useLocation, Link } from 'react-router-dom'
 import { ArrowRightIcon, SocialIcon, UserIcon } from '../components/Icons'
 import VisitUs from '../components/VisitUs'
 import { getBlogs } from '../api/blog'
-import { authorName, formatBlogDate } from '../utils/blog'
+import { authorName, formatBlogDate, slugifyBlog } from '../utils/blog'
 
 function CalendarIcon({ className = 'h-3.5 w-3.5' }) {
   return (
@@ -56,7 +56,8 @@ function RelatedCarousel({ posts }) {
         {visible.map((post) => (
           <Link
             key={post._id}
-            to={`/blog/${post._id}`}
+            to={`/blog/${slugifyBlog(post.title)}`}
+            state={{ id: post._id }}
             className="group flex flex-col overflow-hidden rounded-xl border border-black/10 bg-white"
           >
             {post.image?.url ? (
@@ -105,7 +106,8 @@ function RelatedCarousel({ posts }) {
 }
 
 export default function BlogDetail() {
-  const { id } = useParams()
+  const { slug } = useParams()
+  const { state } = useLocation()
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -118,13 +120,17 @@ export default function BlogDetail() {
       .then((data) => setPosts(data.blogs || []))
       .catch(() => setError(true))
       .finally(() => setLoading(false))
-  }, [id])
+  }, [slug])
 
   if (loading) {
     return <p className="py-24 text-center text-sm text-[#7a7a72]">Loading&hellip;</p>
   }
 
-  const post = posts.find((p) => p._id === id)
+  // If navigated from an internal link the post _id is in router state —
+  // find by ID directly. Otherwise match by slugifyBlog(title) for shared/typed URLs.
+  const post = state?.id
+    ? posts.find((p) => p._id === state.id)
+    : posts.find((p) => slugifyBlog(p.title) === slug)
 
   if (error || !post) {
     return (
@@ -221,7 +227,8 @@ export default function BlogDetail() {
           <div className="mt-8 grid grid-cols-1 gap-4 border-t border-black/10 pt-6 sm:grid-cols-2">
             {prevPost ? (
               <Link
-                to={`/blog/${prevPost._id}`}
+                to={`/blog/${slugifyBlog(prevPost.title)}`}
+                state={{ id: prevPost._id }}
                 className="group flex items-center gap-3 rounded-xl border border-black/10 p-4 hover:border-[#3CA43C]/40"
               >
                 {prevPost.image?.url && (
@@ -241,7 +248,8 @@ export default function BlogDetail() {
             )}
             {nextPost && (
               <Link
-                to={`/blog/${nextPost._id}`}
+                to={`/blog/${slugifyBlog(nextPost.title)}`}
+                state={{ id: nextPost._id }}
                 className="group flex items-center justify-end gap-3 rounded-xl border border-black/10 p-4 text-right hover:border-[#3CA43C]/40 sm:flex-row-reverse sm:text-left"
               >
                 {nextPost.image?.url && (

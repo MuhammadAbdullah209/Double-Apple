@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowRightIcon } from './Icons'
 import { REFILL_POD_PRODUCTS, slugify } from '../data/products'
-import { CATEGORY_ORDER } from '../data/categories'
+import { CATEGORY_ORDER, CATEGORY_SLUG } from '../data/categories'
 
 const MENU_COLUMNS = [
   {
@@ -56,7 +56,7 @@ export default function ShopMegaMenu({ onNavigate }) {
               {col.links.map((link) => (
                 <li key={link.label}>
                   <Link
-                    to={link.category ? `/shop?category=${encodeURIComponent(link.category)}` : '/shop'}
+                    to={link.category ? `/collections/${CATEGORY_SLUG[link.category]}` : '/shop'}
                     onClick={onNavigate}
                     className="text-sm font-bold text-[#1a1a17] hover:text-[#3c6e35]"
                   >
@@ -71,7 +71,7 @@ export default function ShopMegaMenu({ onNavigate }) {
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-[#9a988e]">New This Week</p>
           <Link
-            to={`/shop/${slugify(FEATURED_PRODUCT.name)}`}
+            to={`/products/${slugify(FEATURED_PRODUCT.name)}`}
             onClick={onNavigate}
             className="mt-3 block overflow-hidden rounded-lg bg-[#f2f1ec]"
           >
@@ -83,7 +83,7 @@ export default function ShopMegaMenu({ onNavigate }) {
           </Link>
           <p className="mt-3 text-sm font-bold leading-snug text-[#1a1a17]">{FEATURED_PRODUCT.name}</p>
           <Link
-            to={`/shop/${slugify(FEATURED_PRODUCT.name)}`}
+            to={`/products/${slugify(FEATURED_PRODUCT.name)}`}
             onClick={onNavigate}
             className="mt-3 flex items-center justify-center gap-2 rounded-md bg-[#3CA43C] px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-[#2f8a30]"
           >

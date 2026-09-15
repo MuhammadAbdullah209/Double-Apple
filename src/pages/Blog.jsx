@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import VisitUs from '../components/VisitUs'
 import { ArrowRightIcon, UserIcon } from '../components/Icons'
 import { getBlogs } from '../api/blog'
-import { authorName, formatBlogDate } from '../utils/blog'
+import { authorName, formatBlogDate, slugifyBlog } from '../utils/blog'
 
 function CalendarIcon({ className = 'h-3.5 w-3.5' }) {
   return (
@@ -120,7 +120,8 @@ export default function Blog() {
               </h2>
               <p className="mt-2.5 text-sm leading-relaxed text-[#6b6b6b]">{post.excerpt}</p>
               <Link
-                to={`/blog/${post._id}`}
+                to={`/blog/${slugifyBlog(post.title)}`}
+                state={{ id: post._id }}
                 className="mt-3 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[#3c6e35] hover:underline"
               >
                 Read More

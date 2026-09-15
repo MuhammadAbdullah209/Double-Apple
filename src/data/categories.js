@@ -31,6 +31,25 @@ export const CATEGORY_REAL_NAME = {
   'Coils / Pods': 'COIL',
 }
 
+// URL slug for each category, matching the original site's /collections/:slug
+// pattern (e.g. /collections/shisha, /collections/disposable-hookah).
+export const CATEGORY_SLUG = {
+  Flower: 'flower',
+  Vapes: 'vapes',
+  Kratom: 'kratom',
+  'Refill Pods': 'refill-pods',
+  'Ash Catcher': 'ash-catcher',
+  Shisha: 'shisha',
+  'Disposable Hookah': 'disposable-hookah',
+  'Hookah Pot': 'hookah-pot',
+  'Coils / Pods': 'coils-pods',
+}
+
+// Reverse map: slug → category label
+export const SLUG_TO_CATEGORY = Object.fromEntries(
+  Object.entries(CATEGORY_SLUG).map(([cat, slug]) => [slug, cat])
+)
+
 // Shop page's "{title} – {subtitle}" heading plus a few keyword-rich
 // paragraphs, keyed by the same UI labels as CATEGORY_ORDER above — swaps in
 // for the default copy whenever exactly one category is selected (see

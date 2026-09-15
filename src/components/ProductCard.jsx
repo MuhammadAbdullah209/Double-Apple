@@ -6,6 +6,7 @@ import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { useWishlist } from '../context/WishlistContext'
 import { getDisplaySold, getDisplayRating } from '../utils/socialProof'
+import { slugify } from '../data/products'
 
 function CheckIcon() {
   return (
@@ -62,7 +63,8 @@ export default function ProductCard({ product }) {
 
   return (
     <Link
-      to={`/shop/${product._id}`}
+      to={`/products/${slugify(product.name)}`}
+      state={{ id: product._id }}
       className="group flex flex-col overflow-hidden rounded-xl bg-white shadow-sm"
     >
       <div className="relative bg-[#f2f1ec]">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getHomeCategoryProducts, getCachedHomeCategoryProducts } from '../utils/preloadHome'
-import { CATEGORY_ORDER } from '../data/categories'
+import { CATEGORY_ORDER, CATEGORY_SLUG } from '../data/categories'
 
 function buildItems(entries) {
   return entries
@@ -70,7 +70,7 @@ export default function Collections() {
           {items.map((item) => (
             <a
               key={item.category}
-              href={`/shop?category=${encodeURIComponent(item.category)}`}
+              href={`/collections/${CATEGORY_SLUG[item.category]}`}
               className="group block p-1.5"
             >
               <div className="flex aspect-[3/2] w-full items-center justify-center rounded-sm bg-[#f2f1ec] p-2">
@@ -85,7 +85,7 @@ export default function Collections() {
                   <p className="truncate text-[11px] font-bold text-[#1a1a17]">{item.category}</p>
                   <span
                     className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-[#3c6e35] transition group-hover:underline"
-                    onClick={() => navigate(`/shop?category=${encodeURIComponent(item.category)}`)}
+                    onClick={() => navigate(`/collections/${CATEGORY_SLUG[item.category]}`)}
                   >
                     Shop
                   </span>
