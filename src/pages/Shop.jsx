@@ -4,7 +4,12 @@ import { ChevronDownIcon } from '../components/Icons'
 import ProductCard from '../components/ProductCard'
 import VisitUs from '../components/VisitUs'
 import { getProducts } from '../api/products'
-import { CATEGORY_ORDER as CATEGORIES, CATEGORY_REAL_NAME } from '../data/categories'
+import {
+  CATEGORY_ORDER as CATEGORIES,
+  CATEGORY_REAL_NAME,
+  CATEGORY_PAGE_COPY,
+  DEFAULT_SHOP_PAGE_COPY,
+} from '../data/categories'
 
 const RATINGS = [5, 4, 3, 2, 1]
 
@@ -111,8 +116,22 @@ export default function Shop() {
       .catch(() => setRelatedProducts([]))
   }, [])
 
+  const pageCopy =
+    selectedCategories.length === 1
+      ? CATEGORY_PAGE_COPY[selectedCategories[0]] || DEFAULT_SHOP_PAGE_COPY
+      : DEFAULT_SHOP_PAGE_COPY
+
   return (
     <>
+      <section className="mx-auto max-w-[1280px] px-5 pt-10 lg:px-10">
+        <h1 className="text-2xl font-bold leading-tight text-[#1a1a17] sm:text-[28px]">
+          {pageCopy.title} <span className="font-normal text-[#9a988e]">&ndash;</span> {pageCopy.subtitle}
+        </h1>
+        <p className="mt-1.5 text-sm text-[#7a7a72]">
+          {products.length} product{products.length === 1 ? '' : 's'}
+        </p>
+      </section>
+
       <section className="mx-auto max-w-[1280px] px-5 py-10 lg:px-10">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[260px_1fr]">
           <aside>
@@ -304,6 +323,17 @@ export default function Shop() {
               </div>
             )}
           </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-[1280px] border-t border-black/10 px-5 py-10 lg:px-10">
+        <h2 className="text-xl font-bold text-[#1a1a17]">
+          {pageCopy.title} <span className="font-normal text-[#9a988e]">&ndash;</span> {pageCopy.subtitle}
+        </h2>
+        <div className="mt-4 flex flex-col gap-4 text-sm leading-relaxed text-[#4a4a43]">
+          {pageCopy.description.map((paragraph, i) => (
+            <p key={i} dangerouslySetInnerHTML={{ __html: paragraph }} />
+          ))}
         </div>
       </section>
 
