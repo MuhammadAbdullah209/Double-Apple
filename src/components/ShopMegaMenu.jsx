@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowRightIcon } from './Icons'
 import { REFILL_POD_PRODUCTS, slugify } from '../data/products'
+import { CATEGORY_ORDER } from '../data/categories'
 
 const MENU_COLUMNS = [
   {
@@ -18,7 +19,7 @@ const MENU_COLUMNS = [
     links: [
       { label: 'Refill Pods', category: 'Refill Pods' },
       { label: 'Coils / Pods', category: 'Coils / Pods' },
-      { label: 'All Vapes', category: 'Vapes' },
+      { label: 'Hookah Pot', category: 'Hookah Pot' },
     ],
   },
   {
@@ -32,13 +33,11 @@ const MENU_COLUMNS = [
     ],
   },
   {
+    // Generated straight from the site's full category list, so every real
+    // category always has a link here even if it isn't also featured in one
+    // of the curated columns above.
     title: 'By Category',
-    links: [
-      { label: 'Kratom', category: 'Kratom' },
-      { label: 'Vapes', category: 'Vapes' },
-      { label: 'Refill Pods', category: 'Refill Pods' },
-      { label: 'All Products' },
-    ],
+    links: [...CATEGORY_ORDER.map((cat) => ({ label: cat, category: cat })), { label: 'All Products' }],
   },
 ]
 

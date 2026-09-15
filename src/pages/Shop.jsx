@@ -13,6 +13,12 @@ import {
 
 const RATINGS = [5, 4, 3, 2, 1]
 
+// Every real category currently tops out at a few hundred items (Vapes,
+// the largest, is ~250), so one request per selected category at this limit
+// reliably gets everything in one shot when merging multiple categories —
+// no per-category pagination needed for that path.
+const CATEGORY_FETCH_LIMIT = 300
+
 export default function Shop() {
   const [searchParams] = useSearchParams()
   const initialCategory = searchParams.get('category')
@@ -60,10 +66,68 @@ export default function Shop() {
     setPage(1)
   }, [searchParams])
 
+  // A single selected category queries the backend directly with true
+  // server-side pagination (fast, efficient). More than one category can't
+  // be expressed in a single request — the backend's category filter is an
+  // exact single-value match — so that case fetches each selected category
+  // directly in parallel instead (still a real backend query per category,
+  // just merged + paginated client-side afterward, same pattern used to fix
+  // this same problem on Triple Buzz's Shop page).
   useEffect(() => {
     let cancelled = false
     setLoading(true)
     setError('')
+
+    if (selectedCategories.length > 1) {
+      Promise.all(
+        selectedCategories.map((cat) =>
+          getProducts({
+            limit: CATEGORY_FETCH_LIMIT,
+            category: CATEGORY_REAL_NAME[cat],
+            search: searchQuery || undefined,
+          }).catch(() => ({ products: [] }))
+        )
+      )
+        .then((results) => {
+          if (cancelled) return
+          const seen = new Set()
+          let merged = []
+          for (const data of results) {
+            for (const p of data.products || []) {
+              if (!seen.has(p._id)) {
+                seen.add(p._id)
+                merged.push(p)
+              }
+            }
+          }
+
+          merged = merged.filter((p) => {
+            const price = p.finalPrice ?? p.price
+            const aboveMin = !minPrice || price >= parseFloat(minPrice)
+            const belowMax = !maxPrice || price <= parseFloat(maxPrice)
+            return aboveMin && belowMax
+          })
+
+          if (sortBy === 'price-asc') {
+            merged = [...merged].sort((a, b) => (a.finalPrice ?? a.price) - (b.finalPrice ?? b.price))
+          } else if (sortBy === 'price-desc') {
+            merged = [...merged].sort((a, b) => (b.finalPrice ?? b.price) - (a.finalPrice ?? a.price))
+          }
+
+          setHasNextPage(merged.length > page * perPage)
+          setProducts(merged.slice((page - 1) * perPage, page * perPage))
+        })
+        .catch(() => {
+          if (!cancelled) setError('Could not load products right now. Please try again shortly.')
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false)
+        })
+      return () => {
+        cancelled = true
+      }
+    }
+
     getProducts({
       page,
       limit: perPage,
@@ -78,17 +142,15 @@ export default function Shop() {
         // page exists from whether this page came back full.
         setHasNextPage(list.length === perPage)
 
-        // client-side: price range, multi-category, and name search (backend only filters by one category)
+        // client-side: price range and name search (category is already applied
+        // server-side above when exactly one is selected, or not at all here)
         const q = searchQuery.trim().toLowerCase()
         list = list.filter((p) => {
           const price = p.finalPrice ?? p.price
-          const inCategory =
-            selectedCategories.length === 0 ||
-            selectedCategories.some((c) => CATEGORY_REAL_NAME[c] === p.category)
           const aboveMin = !minPrice || price >= parseFloat(minPrice)
           const belowMax = !maxPrice || price <= parseFloat(maxPrice)
           const matchesQuery = !q || p.name?.toLowerCase().includes(q)
-          return inCategory && aboveMin && belowMax && matchesQuery
+          return aboveMin && belowMax && matchesQuery
         })
 
         if (sortBy === 'price-asc') {
