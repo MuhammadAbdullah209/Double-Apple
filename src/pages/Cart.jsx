@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { getAddresses, createAddress } from '../api/addresses'
 import { createOrder, chargeAuthorizeNetOrder } from '../api/orders'
 import { getProducts } from '../api/products'
+import { validateCoupon } from '../api/coupons'
 import { getImageForCategory } from '../data/productImages'
 import { slugify } from '../data/products'
 import ProductCard from '../components/ProductCard'
@@ -12,10 +13,6 @@ import VisitUs from '../components/VisitUs'
 import CardPaymentForm from '../components/CardPaymentForm'
 import PayPalCheckoutButton from '../components/PayPalCheckoutButton'
 import PaymentIcons, { AuthorizeNetIcon, PayPalIcon } from '../components/PaymentIcons'
-
-const COUPONS = {
-  WELCOME10: 0.1,
-}
 
 function MinusIcon() {
   return (
@@ -97,8 +94,9 @@ export default function Cart() {
 
   const [showCoupon, setShowCoupon] = useState(false)
   const [couponInput, setCouponInput] = useState('')
-  const [appliedCoupon, setAppliedCoupon] = useState(null)
+  const [appliedCoupon, setAppliedCoupon] = useState(null) // { code, discountType, value }
   const [couponError, setCouponError] = useState('')
+  const [couponBusy, setCouponBusy] = useState(false)
 
   const [notes, setNotes] = useState({})
   const [notingId, setNotingId] = useState(null)
@@ -141,20 +139,31 @@ export default function Cart() {
   }, [])
 
   const itemCount = items.reduce((s, i) => s + i.qty, 0)
-  const discount = appliedCoupon ? (subtotal + protectionTotal) * COUPONS[appliedCoupon] : 0
-  const grandTotal = subtotal + protectionTotal - discount
+  const preDiscountTotal = subtotal + protectionTotal
+  const rawDiscount = appliedCoupon
+    ? appliedCoupon.discountType === 'percentage'
+      ? (preDiscountTotal * appliedCoupon.value) / 100
+      : appliedCoupon.value
+    : 0
+  const discount = Math.round(Math.min(rawDiscount, preDiscountTotal) * 100) / 100
+  const grandTotal = preDiscountTotal - discount
 
   const selectedAddress = savedAddresses.find((a) => a._id === selectedAddressId) || null
   const shippingAddress = !isAuthenticated ? addressForm : addingAddress ? addressForm : selectedAddress
 
-  const applyCoupon = () => {
+  const handleApplyCoupon = async () => {
     const code = couponInput.trim().toUpperCase()
-    if (COUPONS[code]) {
-      setAppliedCoupon(code)
-      setCouponError('')
-    } else {
-      setCouponError('That code isn’t valid.')
+    if (!code) return
+    setCouponBusy(true)
+    setCouponError('')
+    try {
+      const data = await validateCoupon(code, preDiscountTotal, 'doubleapple')
+      setAppliedCoupon({ code: data.code, discountType: data.discountType, value: data.value })
+    } catch (err) {
+      setCouponError(err.response?.data?.message || 'That code isn’t valid.')
       setAppliedCoupon(null)
+    } finally {
+      setCouponBusy(false)
     }
   }
 
@@ -205,18 +214,29 @@ export default function Cart() {
         country: shippingAddress.country,
       },
       guestInfo: isAuthenticated ? undefined : guestForm,
+      site: 'doubleapple',
+      couponCode: appliedCoupon ? appliedCoupon.code : undefined,
     }
   }
 
   const handleOrderPlaced = (order) => {
-    setPlacedOrder({ order, protectionTotal, discount, grandTotal: order.totalAmount + protectionTotal - discount })
+    // order.totalAmount already has any coupon discount applied server-side
+    // (see OrderController.prepareOrder) — don't subtract `discount` again
+    // here, or a coupon gets applied twice on this confirmation screen.
+    setPlacedOrder({ order, protectionTotal, discount, grandTotal: order.totalAmount + protectionTotal })
     clearCart()
   }
 
   const placeOrder = async () => {
     const payload = buildOrderPayload()
     if (!payload) return
-    const { items: orderItems, shippingAddress: orderShippingAddress, guestInfo: orderGuestInfo } = payload
+    const {
+      items: orderItems,
+      shippingAddress: orderShippingAddress,
+      guestInfo: orderGuestInfo,
+      site: orderSite,
+      couponCode: orderCouponCode,
+    } = payload
 
     setPlacing(true)
     try {
@@ -234,6 +254,8 @@ export default function Cart() {
           shippingAddress: orderShippingAddress,
           guestInfo: orderGuestInfo,
           opaqueData,
+          site: orderSite,
+          couponCode: orderCouponCode,
         }))
       } else {
         ;({ order } = await createOrder({
@@ -241,6 +263,8 @@ export default function Cart() {
           shippingAddress: orderShippingAddress,
           paymentMethod: 'Cash On Delivery',
           guestInfo: orderGuestInfo,
+          site: orderSite,
+          couponCode: orderCouponCode,
         }))
       }
       handleOrderPlaced(order)
@@ -770,10 +794,11 @@ export default function Cart() {
                     />
                     <button
                       type="button"
-                      onClick={applyCoupon}
-                      className="shrink-0 rounded-md border border-[#3CA43C] px-4 py-2 text-xs font-bold uppercase tracking-wide text-[#3CA43C] hover:bg-[#eef4e9]"
+                      onClick={handleApplyCoupon}
+                      disabled={couponBusy}
+                      className="shrink-0 rounded-md border border-[#3CA43C] px-4 py-2 text-xs font-bold uppercase tracking-wide text-[#3CA43C] hover:bg-[#eef4e9] disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      Apply
+                      {couponBusy ? 'Checking…' : 'Apply'}
                     </button>
                   </div>
                   {couponError && (
@@ -781,10 +806,13 @@ export default function Cart() {
                   )}
                   {appliedCoupon && (
                     <p className="text-xs font-medium text-[#3c6e35]">
-                      Code {appliedCoupon} applied &mdash; 10% off
+                      Code {appliedCoupon.code} applied &mdash;{' '}
+                      {appliedCoupon.discountType === 'percentage'
+                        ? `${appliedCoupon.value}%`
+                        : `$${appliedCoupon.value}`}{' '}
+                      off
                     </p>
                   )}
-                  <p className="text-xs text-[#7a7a72]">Try WELCOME10 for 10% off your first order.</p>
                 </div>
               )}
 

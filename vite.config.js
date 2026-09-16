@@ -30,6 +30,7 @@ export default defineConfig(({ mode }) => {
         '/Review': proxyTarget,
         '/Blog': proxyTarget,
         '/Newsletter': proxyTarget,
+        '/Coupon': proxyTarget,
       },
     },
   }

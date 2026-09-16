@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom'
+import AnnouncementBar from './AnnouncementBar'
 import Header from './Header'
 import Footer from './Footer'
 import FooterDisclaimers from './FooterDisclaimers'
@@ -12,6 +13,7 @@ export default function Layout() {
     <div className="min-h-screen bg-[#fbfaf7] text-[#1a1a17]">
       <TabAttentionGrabber />
       <AgeVerificationModal />
+      <AnnouncementBar />
       <Header />
       <Outlet />
       <Footer />

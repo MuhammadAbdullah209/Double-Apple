@@ -1,7 +1,9 @@
 import api from './client'
 
-export function createOrder({ items, shippingAddress, paymentMethod, guestInfo }) {
-  return api.post('/Order/create', { items, shippingAddress, paymentMethod, guestInfo }).then((r) => r.data)
+export function createOrder({ items, shippingAddress, paymentMethod, guestInfo, site, couponCode }) {
+  return api
+    .post('/Order/create', { items, shippingAddress, paymentMethod, guestInfo, site, couponCode })
+    .then((r) => r.data)
 }
 
 export function getMyOrders(params) {
@@ -16,14 +18,16 @@ export function cancelOrder(id) {
   return api.put(`/Order/${id}`).then((r) => r.data)
 }
 
-export function chargeAuthorizeNetOrder({ items, shippingAddress, guestInfo, opaqueData }) {
+export function chargeAuthorizeNetOrder({ items, shippingAddress, guestInfo, opaqueData, site, couponCode }) {
   return api
-    .post('/Order/authorizenet/charge', { items, shippingAddress, guestInfo, opaqueData })
+    .post('/Order/authorizenet/charge', { items, shippingAddress, guestInfo, opaqueData, site, couponCode })
     .then((r) => r.data)
 }
 
-export function initiatePaypalOrder({ items, shippingAddress, guestInfo }) {
-  return api.post('/Order/paypal/create', { items, shippingAddress, guestInfo }).then((r) => r.data)
+export function initiatePaypalOrder({ items, shippingAddress, guestInfo, site, couponCode }) {
+  return api
+    .post('/Order/paypal/create', { items, shippingAddress, guestInfo, site, couponCode })
+    .then((r) => r.data)
 }
 
 export function capturePaypalOrder(paypalOrderId) {
