@@ -75,7 +75,7 @@ const EMPTY_GUEST_FORM = { firstName: '', lastName: '', email: '', phone: '' }
 export default function Cart() {
   const { items, updateQty, removeItem, toggleProtection, subtotal, protectionTotal, clearCart } =
     useCart()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
 
   const [savedAddresses, setSavedAddresses] = useState([])
   const [selectedAddressId, setSelectedAddressId] = useState(null)
@@ -84,6 +84,16 @@ export default function Cart() {
   const [savingAddress, setSavingAddress] = useState(false)
 
   const [guestForm, setGuestForm] = useState(EMPTY_GUEST_FORM)
+
+  // Prefill the optional email field shown to signed-in shoppers — it's
+  // never sent to the backend (buildOrderPayload omits guestInfo once
+  // isAuthenticated), since the order confirmation email already goes to
+  // this account's profile address regardless of what's typed here.
+  useEffect(() => {
+    if (isAuthenticated && user?.email) {
+      setGuestForm((f) => (f.email ? f : { ...f, email: user.email }))
+    }
+  }, [isAuthenticated, user])
 
   const [showCoupon, setShowCoupon] = useState(false)
   const [couponInput, setCouponInput] = useState('')
@@ -502,7 +512,7 @@ export default function Cart() {
               ))}
             </div>
 
-            {!isAuthenticated && (
+            {!isAuthenticated ? (
               <>
                 <h2 className="mt-10 text-xl font-bold text-[#1a1a17]">Contact Details</h2>
                 <div className="mt-4 grid grid-cols-1 gap-3 rounded-xl border border-black/10 p-5 sm:grid-cols-2">
@@ -537,6 +547,22 @@ export default function Cart() {
                       Sign in
                     </Link>{' '}
                     to save this address for next time.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="mt-10 text-xl font-bold text-[#1a1a17]">Contact Details</h2>
+                <div className="mt-4 rounded-xl border border-black/10 p-5">
+                  <input
+                    type="email"
+                    placeholder="Email (optional)"
+                    value={guestForm.email}
+                    onChange={(e) => setGuestForm((f) => ({ ...f, email: e.target.value }))}
+                    className="w-full max-w-sm rounded-md border border-black/15 px-3 py-2 text-sm text-[#1a1a17] outline-none focus:ring-2 focus:ring-[#3CA43C]/40"
+                  />
+                  <p className="mt-2 text-xs text-[#7a7a72]">
+                    Optional &mdash; we already have your email from your profile and will send your order confirmation there.
                   </p>
                 </div>
               </>
