@@ -976,7 +976,7 @@ export default function Profile() {
             <ComingSoon
               Icon={CardIcon}
               title="Payment"
-              description="Online payment methods are coming soon — all orders are Cash On Delivery for now."
+              description="Saved payment methods are coming soon — pay with card or PayPal at checkout for now."
             />
           )}
         </div>

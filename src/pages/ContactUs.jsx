@@ -106,7 +106,7 @@ export default function ContactUs() {
             </p>
             <p>
               Visit us at 11220 N Lamar Blvd B202, Austin, TX 78753, or contact us at
-              +1 512-271-3390.
+              +1 512-351-8012.
             </p>
           </div>
         </div>
@@ -131,7 +131,7 @@ export default function ContactUs() {
             </span>
             <div>
               <p className="text-[15px] font-bold text-[#1a1a1a]">Call Us</p>
-              <p className="mt-1 text-sm text-[#6b6b6b]">+1 512-271-3390</p>
+              <p className="mt-1 text-sm text-[#6b6b6b]">+1 512-351-8012</p>
             </div>
           </div>
 
@@ -141,7 +141,7 @@ export default function ContactUs() {
             </span>
             <div>
               <p className="text-[15px] font-bold text-[#1a1a1a]">Email</p>
-              <p className="mt-1 text-sm text-[#6b6b6b]">hello@doubleapple.shop</p>
+              <p className="mt-1 text-sm text-[#6b6b6b]">doubleappless@gmail.com</p>
             </div>
           </div>
         </div>

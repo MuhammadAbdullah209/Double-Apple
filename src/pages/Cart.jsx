@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { getAddresses, createAddress } from '../api/addresses'
-import { createOrder, chargeAuthorizeNetOrder } from '../api/orders'
+import { chargeAuthorizeNetOrder } from '../api/orders'
 import { getProducts } from '../api/products'
 import { validateCoupon } from '../api/coupons'
 import { getImageForCategory } from '../data/productImages'
@@ -38,15 +38,6 @@ function TrashIcon() {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-    </svg>
-  )
-}
-
-function CardIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <rect x="2.5" y="5" width="19" height="14" rx="2" />
-      <path d="M2.5 9.5h19" strokeLinecap="round" />
     </svg>
   )
 }
@@ -101,7 +92,6 @@ export default function Cart() {
   const [notes, setNotes] = useState({})
   const [notingId, setNotingId] = useState(null)
 
-  const [paymentMode, setPaymentMode] = useState('cod') // 'cod' | 'card'
   const [activeGateway, setActiveGateway] = useState('authorize') // which provider's panel is expanded
   const cardFormRef = useRef(null)
 
@@ -188,7 +178,7 @@ export default function Cart() {
     }
   }
 
-  // Shared by the COD/card submit flow and the PayPal button's createOrder
+  // Shared by the card submit flow and the PayPal button's createOrder
   // callback — validates the address/guest fields and shapes the payload the
   // backend expects. Returns null (after setting placeError) when invalid.
   const buildOrderPayload = () => {
@@ -240,33 +230,21 @@ export default function Cart() {
 
     setPlacing(true)
     try {
-      let order
-      if (paymentMode === 'card') {
-        let opaqueData
-        try {
-          opaqueData = await cardFormRef.current.tokenize()
-        } catch (tokenizeErr) {
-          setPlaceError(tokenizeErr.message || 'Could not process your card. Please check the details and try again.')
-          return
-        }
-        ;({ order } = await chargeAuthorizeNetOrder({
-          items: orderItems,
-          shippingAddress: orderShippingAddress,
-          guestInfo: orderGuestInfo,
-          opaqueData,
-          site: orderSite,
-          couponCode: orderCouponCode,
-        }))
-      } else {
-        ;({ order } = await createOrder({
-          items: orderItems,
-          shippingAddress: orderShippingAddress,
-          paymentMethod: 'Cash On Delivery',
-          guestInfo: orderGuestInfo,
-          site: orderSite,
-          couponCode: orderCouponCode,
-        }))
+      let opaqueData
+      try {
+        opaqueData = await cardFormRef.current.tokenize()
+      } catch (tokenizeErr) {
+        setPlaceError(tokenizeErr.message || 'Could not process your card. Please check the details and try again.')
+        return
       }
+      const { order } = await chargeAuthorizeNetOrder({
+        items: orderItems,
+        shippingAddress: orderShippingAddress,
+        guestInfo: orderGuestInfo,
+        opaqueData,
+        site: orderSite,
+        couponCode: orderCouponCode,
+      })
       handleOrderPlaced(order)
     } catch (err) {
       setPlaceError(err.response?.data?.message || 'Could not place your order. Please try again.')
@@ -698,71 +676,40 @@ export default function Cart() {
             </div>
 
             <h2 className="mt-10 text-xl font-bold text-[#1a1a17]">Payment Method</h2>
-            <div className="mt-4 flex overflow-hidden rounded-xl border border-black/10">
-              <button
-                type="button"
-                onClick={() => setPaymentMode('cod')}
-                className={`flex flex-1 items-center justify-center gap-2 px-5 py-4 text-sm font-semibold ${
-                  paymentMode === 'cod' ? 'bg-[#eef4e9] text-[#3c6e35]' : 'text-[#7a7a72] hover:bg-black/5'
-                }`}
-              >
-                Cash On Delivery
-              </button>
-              <button
-                type="button"
-                onClick={() => setPaymentMode('card')}
-                className={`flex flex-1 items-center justify-center gap-2 border-l border-black/10 px-5 py-4 text-sm font-semibold ${
-                  paymentMode === 'card' ? 'bg-[#eef4e9] text-[#3c6e35]' : 'text-[#7a7a72] hover:bg-black/5'
-                }`}
-              >
-                <CardIcon className="h-4 w-4" />
-                Credit / Debit Card
-              </button>
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {PAYMENT_GATEWAYS.map((gw) => {
+                const Icon = gw.icon
+                const isOpen = activeGateway === gw.id
+                return (
+                  <button
+                    key={gw.id}
+                    type="button"
+                    onClick={() => setActiveGateway(isOpen ? null : gw.id)}
+                    className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition ${
+                      isOpen
+                        ? 'border-[#3CA43C] bg-[#eef4e9] text-[#3c6e35]'
+                        : 'border-black/15 text-[#4a4a43] hover:bg-black/5'
+                    }`}
+                  >
+                    <span className="scale-[0.8]">
+                      <Icon />
+                    </span>
+                    {gw.label}
+                    <ChevronIcon
+                      className={`h-3 w-3 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                )
+              })}
             </div>
 
-            {paymentMode === 'cod' && (
-              <p className="mt-2 text-xs text-[#9a988e]">
-                Cash On Delivery — you pay when your order arrives.
-              </p>
-            )}
-            {paymentMode === 'card' && (
-              <>
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {PAYMENT_GATEWAYS.map((gw) => {
-                    const Icon = gw.icon
-                    const isOpen = activeGateway === gw.id
-                    return (
-                      <button
-                        key={gw.id}
-                        type="button"
-                        onClick={() => setActiveGateway(isOpen ? null : gw.id)}
-                        className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition ${
-                          isOpen
-                            ? 'border-[#3CA43C] bg-[#eef4e9] text-[#3c6e35]'
-                            : 'border-black/15 text-[#4a4a43] hover:bg-black/5'
-                        }`}
-                      >
-                        <span className="scale-[0.8]">
-                          <Icon />
-                        </span>
-                        {gw.label}
-                        <ChevronIcon
-                          className={`h-3 w-3 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                        />
-                      </button>
-                    )
-                  })}
-                </div>
-
-                {activeGateway === 'authorize' && <CardPaymentForm ref={cardFormRef} />}
-                {activeGateway === 'paypal' && (
-                  <PayPalCheckoutButton
-                    getOrderPayload={buildOrderPayload}
-                    onApproved={handleOrderPlaced}
-                    onError={setPlaceError}
-                  />
-                )}
-              </>
+            {activeGateway === 'authorize' && <CardPaymentForm ref={cardFormRef} />}
+            {activeGateway === 'paypal' && (
+              <PayPalCheckoutButton
+                getOrderPayload={buildOrderPayload}
+                onApproved={handleOrderPlaced}
+                onError={setPlaceError}
+              />
             )}
           </div>
 
@@ -856,24 +803,22 @@ export default function Cart() {
                 <p className="mt-3 text-xs font-medium text-red-600">{placeError}</p>
               )}
 
-              {(paymentMode === 'cod' || (paymentMode === 'card' && activeGateway === 'authorize')) && (
+              {activeGateway === 'authorize' && (
                 <button
                   type="button"
                   onClick={placeOrder}
                   disabled={placing}
                   className="mt-5 w-full rounded-md bg-[#3CA43C] px-6 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-[#2f8a30] disabled:opacity-60"
                 >
-                  {placing ? 'Placing Order…' : paymentMode === 'card' ? 'Pay & Place Order' : 'Place Order'}
+                  {placing ? 'Placing Order…' : 'Pay & Place Order'}
                 </button>
               )}
               <p className="mt-2 text-center text-xs text-[#7a7a72]">
-                {paymentMode === 'card'
-                  ? activeGateway === 'paypal'
-                    ? 'Use the PayPal button above to complete your payment.'
-                    : activeGateway === 'authorize'
-                      ? 'Your card will be charged immediately.'
-                      : 'Choose a payment provider above to continue.'
-                  : 'Cash On Delivery — you pay when your order arrives.'}
+                {activeGateway === 'paypal'
+                  ? 'Use the PayPal button above to complete your payment.'
+                  : activeGateway === 'authorize'
+                    ? 'Your card will be charged immediately.'
+                    : 'Choose a payment provider above to continue.'}
               </p>
               <div className="mt-4">
                 <PaymentIcons />
